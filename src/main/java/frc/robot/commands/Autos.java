@@ -15,10 +15,13 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 
 public final class Autos {
 
@@ -65,6 +68,23 @@ public final class Autos {
 
     // Run path following command, then stop at the end.
     return swerveControllerCommand.andThen(() -> drive.drive(0, 0, 0, false));
+  }
+
+  /**
+   * a simple auto that shoots for 5 seconds.
+   * it runs the shooter command and the new Conveyor command in parallel (i think).
+   */
+  public static Command simpleAuto(ShooterSubsystem shooter, IntakeSubsystem intake) {
+    return Commands.parallel(
+        // run the shooter sequence (Spin Up then activate Feeder (i think))
+        shooter.runShooterCommand(),
+        
+        // run the conveyor, but WAIT until the flywheel is ready so we don't jam it up
+        Commands.waitUntil(shooter.isFlywheelSpinning::getAsBoolean)
+            .andThen(intake.runConveyorCommand())
+            
+    ).withTimeout(5.0) // Stop everything after 5 seconds
+    .withName("Simple Auto");
   }
 
   private Autos() {

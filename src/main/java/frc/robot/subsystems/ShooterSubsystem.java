@@ -143,10 +143,15 @@ public class ShooterSubsystem extends SubsystemBase {
    * the desired speed it starts the Feeder.
    */
   public Command runShooterCommand() {
-    return this.startEnd(
-      () -> this.setFlywheelVelocity(FlywheelSetpoints.kShootRpm),
-      () -> flywheelMotor.stopMotor()
-    ).until(isFlywheelSpinning).andThen(
+    // 1. Spin up the flywheel
+    return this.run(() -> this.setFlywheelVelocity(FlywheelSetpoints.kShootRpm))
+    // 2. Wait until it reaches speed
+    .until(isFlywheelSpinning)
+    // 3. If the button is released BEFORE speed is reached, stop the motor.
+    //    If we reach speed naturally, do NOT stop (so we can transition to feeding).
+    .finallyDo(interrupted -> { if(interrupted) flywheelMotor.stopMotor(); })
+    // 4. Run the feeder (while keeping the flywheel running)
+    .andThen(
       this.startEnd(
         () -> {
           this.setFlywheelVelocity(FlywheelSetpoints.kShootRpm);

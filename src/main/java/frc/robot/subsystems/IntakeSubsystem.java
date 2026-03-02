@@ -91,6 +91,28 @@ public class IntakeSubsystem extends SubsystemBase {
         }).withName("Extaking");
   }
 
+  /**
+   * Command to run the intake and conveyor motors for a set time.
+   * @param seconds The time to run the intake for.
+   * NOT USING YET, i'm thinking we could use this in auto..
+   * ..naviate somewhere then intake for x seconds.
+   */
+  public Command runIntakeForTime(double seconds) {
+    return runIntakeCommand()
+      .withTimeout(seconds)
+      .withName(String.format("Intaking for %.2fs", seconds));
+  }
+
+  /**
+   * Command to run just the conveyor motor.
+   */
+  public Command runConveyorCommand() {
+    return this.startEnd(
+        () -> this.setConveyorPower(ConveyorSetpoints.kIntake),
+        () -> this.setConveyorPower(0.0)
+    ).withName("Run Conveyor");
+  }
+
   @Override
   public void periodic() {
     // Display subsystem values
