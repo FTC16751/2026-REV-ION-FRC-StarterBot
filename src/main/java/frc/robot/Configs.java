@@ -79,6 +79,7 @@ public final class Configs {
   public static final class IntakeSubsystem {
     public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
     public static final SparkFlexConfig conveyorConfig = new SparkFlexConfig();
+    public static final SparkFlexConfig pivotConfig = new SparkFlexConfig();
 
     static {
       // Configure basic settings of the intake motor
@@ -94,6 +95,30 @@ public final class Configs {
         .idleMode(IdleMode.kCoast)
         .openLoopRampRate(0.5)
         .smartCurrentLimit(40);
+
+      // Configure settings for the intake pivot motor 
+      pivotConfig
+        .idleMode(IdleMode.kBrake) // Brake mode to hold position
+        .smartCurrentLimit(40);
+      
+      /*  
+      *   TODO: 
+      *   validate gear ratio
+      */
+
+      // calculated pivot gear reduction: 12:1 Gearbox (4:1*3*1) * (48T / 16T) Chain = 36:1 geer reduction
+      double pivotReduction = 12.0 * (48.0 / 16.0);
+      double pivotPositionFactor = 360.0 / pivotReduction;
+
+      pivotConfig.encoder
+        .positionConversionFactor(pivotPositionFactor) // Converts Motor Rotations -> Arm Degrees
+        .velocityConversionFactor(pivotPositionFactor / 60.0); // Degrees per second
+
+      // TODO: Tune the pid coefficients and output range  
+      pivotConfig.closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        .pid(0.05, 0, 0) //Tune this!
+        .outputRange(-0.5, 0.5); // Safety for testing. Tune this!
     }
   }
 

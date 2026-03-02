@@ -20,8 +20,9 @@ import edu.wpi.first.math.util.Units;
 public final class Constants {
 
   public static final class IntakeSubsystemConstants {
-    public static final int kIntakeMotorCanId = 2;    // SPARK Flex CAN ID
-    public static final int kConveyorMotorCanId = 4;  // SPARK Flex CAN ID
+    public static final int kIntakeMotorCanId = 30;    // SPARK Flex CAN ID
+    public static final int kPivotMotorCanId = 31;     // SPARK Flex CAN ID (New Pivot Motor)
+    public static final int kConveyorMotorCanId = 23;  // SPARK Flex CAN ID
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.6;
@@ -32,12 +33,17 @@ public final class Constants {
       public static final double kIntake = 0.7;
       public static final double kExtake = -0.7;
     }
+
+    public static final class PivotSetpoints {
+      public static final double kRetractedDegrees = 0.0; // Vertical / Stowed
+      public static final double kDeployedDegrees = 90.0; // Horizontal / Intake position
+    }
   }
 
   public static final class ShooterSubsystemConstants {
-    public static final int kFeederMotorCanId = 5;    // SPARK Flex CAN ID
-    public static final int kFlywheelMotorCanId = 6;  // SPARK Flex CAN ID (Right)
-    public static final int kFlywheelFollowerMotorCanId = 7;  // SPARK Flex CAN ID (Left)
+    public static final int kFeederMotorCanId = 22;    // SPARK Flex CAN ID
+    public static final int kFlywheelMotorCanId = 20;  // SPARK Flex CAN ID (Right)
+    public static final int kFlywheelFollowerMotorCanId = 21;  // SPARK Flex CAN ID (Left)
 
     public static final class FeederSetpoints {
       public static final double kFeed = 0.95;
@@ -89,15 +95,15 @@ public final class Constants {
     public static final boolean kRearRightTurningMotorOnBottom = true;
 
     // SPARK MAX CAN IDs
-    public static final int kFrontLeftDrivingCanId = 15;
-    public static final int kRearLeftDrivingCanId = 13;
-    public static final int kFrontRightDrivingCanId = 11;
-    public static final int kRearRightDrivingCanId = 9;
+    public static final int kFrontLeftDrivingCanId = 10;
+    public static final int kRearLeftDrivingCanId = 14;
+    public static final int kFrontRightDrivingCanId = 12;
+    public static final int kRearRightDrivingCanId = 16;
 
-    public static final int kFrontLeftTurningCanId = 14;
-    public static final int kRearLeftTurningCanId = 12;
-    public static final int kFrontRightTurningCanId = 10;
-    public static final int kRearRightTurningCanId = 8;
+    public static final int kFrontLeftTurningCanId = 11;
+    public static final int kRearLeftTurningCanId = 15;
+    public static final int kFrontRightTurningCanId = 13;
+    public static final int kRearRightTurningCanId = 17;
 
     public static final boolean kGyroReversed = false;
   }

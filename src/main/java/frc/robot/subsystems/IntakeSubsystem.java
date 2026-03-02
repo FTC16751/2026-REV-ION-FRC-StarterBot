@@ -4,8 +4,11 @@
 
 package frc.robot.subsystems;
 
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -16,6 +19,7 @@ import frc.robot.Configs;
 import frc.robot.Constants.IntakeSubsystemConstants;
 import frc.robot.Constants.IntakeSubsystemConstants.ConveyorSetpoints;
 import frc.robot.Constants.IntakeSubsystemConstants.IntakeSetpoints;
+import frc.robot.Constants.IntakeSubsystemConstants.PivotSetpoints;
 
 public class IntakeSubsystem extends SubsystemBase {
   // Initialize intake SPARK. We will use open loop control for this.
@@ -25,6 +29,12 @@ public class IntakeSubsystem extends SubsystemBase {
   // Initialize conveyor SPARK. We will use open loop control for this.
   private SparkFlex conveyorMotor =
       new SparkFlex(IntakeSubsystemConstants.kConveyorMotorCanId, MotorType.kBrushless);
+
+  // Initialize pivot SPARK. We use closed loop position control for this.
+  private SparkFlex pivotMotor =
+      new SparkFlex(IntakeSubsystemConstants.kPivotMotorCanId, MotorType.kBrushless);
+  private SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
+  private RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
 
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
@@ -48,6 +58,14 @@ public class IntakeSubsystem extends SubsystemBase {
       ResetMode.kResetSafeParameters,
       PersistMode.kPersistParameters);
 
+    pivotMotor.configure(
+      Configs.IntakeSubsystem.pivotConfig,
+      ResetMode.kResetSafeParameters,
+      PersistMode.kPersistParameters);
+
+    // Assume the robot starts with the intake retracted (0 degrees)
+    pivotEncoder.setPosition(0.0);
+
     System.out.println("---> IntakeSubsystem initialized");
   }
 
@@ -59,6 +77,11 @@ public class IntakeSubsystem extends SubsystemBase {
   /** Set the conveyor motor power in the range of [-1, 1]. */
   private void setConveyorPower(double power) {
     conveyorMotor.set(power);
+  }
+
+  /** Set the pivot target angle in degrees. */
+  private void setPivotPosition(double degrees) {
+    pivotController.setReference(degrees, ControlType.kPosition);
   }
 
   /**
@@ -113,11 +136,28 @@ public class IntakeSubsystem extends SubsystemBase {
     ).withName("Run Conveyor");
   }
 
+  /**
+   * Command to deploy the intake.
+   */
+  public Command deployIntakeCommand() {
+    return this.runOnce(() -> setPivotPosition(PivotSetpoints.kDeployedDegrees))
+        .withName("Deploy Intake");
+  }
+
+  /**
+   * Command to retract the intake.
+   */
+  public Command retractIntakeCommand() {
+    return this.runOnce(() -> setPivotPosition(PivotSetpoints.kRetractedDegrees))
+        .withName("Retract Intake");
+  }
+
   @Override
   public void periodic() {
     // Display subsystem values
     SmartDashboard.putNumber("Intake | Intake | Applied Output", intakeMotor.getAppliedOutput());
     SmartDashboard.putNumber("Intake | Conveyor | Applied Output", conveyorMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Intake | Pivot | Position (Deg)", pivotEncoder.getPosition());
   }
 
 }
