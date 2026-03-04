@@ -83,6 +83,7 @@ public class RobotContainer {
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
 
+    //TODO: extend/retract intake. Possibly as a function of the right trigger position?
     // Right Trigger -> Run fuel intake in reverse
     m_driverController
       .rightTrigger(OIConstants.kTriggerButtonThreshold)
@@ -95,6 +96,7 @@ public class RobotContainer {
 
     // Y Button -> Run intake and run the shooter flywheel and feeder
     m_driverController.y().toggleOnTrue(m_shooter.runShooterCommand().alongWith(m_intake.runIntakeCommand()));
+
   }
 
   /**

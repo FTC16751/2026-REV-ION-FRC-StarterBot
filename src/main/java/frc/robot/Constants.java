@@ -18,6 +18,7 @@ import edu.wpi.first.math.util.Units;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  // TODO: set CAN ids to match code
 
   public static final class IntakeSubsystemConstants {
     public static final int kIntakeMotorCanId = 30;    // SPARK Flex CAN ID
@@ -35,6 +36,7 @@ public final class Constants {
     }
 
     public static final class PivotSetpoints {
+      // TODO: check these if they need to be reversed?
       public static final double kRetractedDegrees = 0.0; // Vertical / Stowed
       public static final double kDeployedDegrees = 90.0; // Horizontal / Intake position
     }

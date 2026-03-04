@@ -18,6 +18,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
+  
+  // TODO: add simulation code. Visualization is just from the pose
+
   // Create EasySwerveModules
   private final EasySwerveModule m_frontLeft = new EasySwerveModule(
     DriveConstants.kFrontLeftDrivingCanId,
@@ -48,6 +51,7 @@ private final EasySwerveModule m_rearRight = new EasySwerveModule(
     DriveConstants.kRearRightTurningMotorOnBottom);
 
   // The gyro sensor
+  //TODO: investigate using different Gyro? Can stick gyro closer to center of gravity. Might be required for Limelight?
   private final ADIS16470_IMU m_gyro = new ADIS16470_IMU();
 
   // Odometry class for tracking robot pose
@@ -67,6 +71,10 @@ private final EasySwerveModule m_rearRight = new EasySwerveModule(
 
   @Override
   public void periodic() {
+    // TODO: pub odometry pose to NT (AdvantageKit?)
+    // TODO: pub swerve module info to NT
+    // TODO: addVisionMeasurement from LimeLight
+    // TODO: tune StdDev for Limelight
     // Update the odometry in the periodic block
     m_odometry.update(
         Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kY)),

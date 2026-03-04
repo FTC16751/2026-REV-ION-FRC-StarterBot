@@ -38,6 +38,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
+    // TODO: add simulation code
     /*
      * Apply the appropriate configurations to the SPARKs.
      *
@@ -81,7 +82,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   /** Set the pivot target angle in degrees. */
   private void setPivotPosition(double degrees) {
-    pivotController.setReference(degrees, ControlType.kPosition);
+    pivotController.setSetpoint(degrees, ControlType.kPosition);
   }
 
   /**
@@ -154,10 +155,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    // TODO: get these to be heirarchial so we can view them easier. 
     // Display subsystem values
     SmartDashboard.putNumber("Intake | Intake | Applied Output", intakeMotor.getAppliedOutput());
     SmartDashboard.putNumber("Intake | Conveyor | Applied Output", conveyorMotor.getAppliedOutput());
     SmartDashboard.putNumber("Intake | Pivot | Position (Deg)", pivotEncoder.getPosition());
+  }
+
+  @Override
+  public void simulationPeriodic(){
+
   }
 
 }
