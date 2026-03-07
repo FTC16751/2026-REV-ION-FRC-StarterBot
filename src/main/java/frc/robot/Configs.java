@@ -114,6 +114,8 @@ public final class Configs {
         .positionConversionFactor(pivotPositionFactor) // Converts Motor Rotations -> Arm Degrees
         .velocityConversionFactor(pivotPositionFactor / 60.0); // Degrees per second
 
+      // TODO: Tune the feedforward coefficients: https://docs.revrobotics.com/revlib/spark/closed-loop/feed-forward-control
+      // Will need kS, kCos, possibly kCosRatio
       // TODO: Tune the pid coefficients and output range  
       pivotConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)

@@ -21,6 +21,7 @@ import com.revrobotics.ResetMode;
 import frc.robot.Configs;
 
 public class EasySwerveModule {
+  // TODO: update SparkMaxes to SparkFlexes ( using SparkFlex and Vortexes, instead of Maxes and Neo v2s)
   private final SparkMax m_drivingSpark;
   private final SparkMax m_turningSpark;
 

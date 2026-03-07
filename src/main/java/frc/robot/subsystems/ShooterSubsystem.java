@@ -24,6 +24,8 @@ import frc.robot.Constants.ShooterSubsystemConstants;
 
 public class ShooterSubsystem extends SubsystemBase {
   
+    // TODO: add simulation code - visualize with mechanism2d
+  
   // Initialize flywheel SPARKs. We will use MAXMotion velocity control for the flywheel, so we also need to
   // initialize the closed loop controllers and encoders.
   private SparkFlex flywheelMotor =
@@ -165,9 +167,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    // TODO: get these to be heirarchial so we can view them easier. 
     // Display subsystem values
-    SmartDashboard.putNumber("Shooter | Feeder | Applied Output", feederMotor.getAppliedOutput());
-    SmartDashboard.putNumber("Shooter | Flywheel | Applied Output", flywheelMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Shooter \\ Feeder \\ Applied Output", feederMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Shooter \\ Flywheel \\ Applied Output", flywheelMotor.getAppliedOutput());
     SmartDashboard.putNumber("Shooter | Flywheel | Current", flywheelMotor.getOutputCurrent());
     SmartDashboard.putNumber("Shooter | Flywheel Follower | Applied Output", flywheelFollowerMotor.getAppliedOutput());
     SmartDashboard.putNumber("Shooter | Flywheel Follower | Current", flywheelFollowerMotor.getOutputCurrent());
