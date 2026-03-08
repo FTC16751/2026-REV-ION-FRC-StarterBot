@@ -8,22 +8,40 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotBase;
 
 /**
- * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
- * constants. This class should not be used for any other purpose. All constants should be declared
+ * The Constants class provides a convenient place for teams to hold robot-wide
+ * numerical or boolean
+ * constants. This class should not be used for any other purpose. All constants
+ * should be declared
  * globally (i.e. public static). Do not put anything functional in this class.
  *
- * <p>It is advised to statically import this class (or one of its inner classes) wherever the
+ * <p>
+ * It is advised to statically import this class (or one of its inner classes)
+ * wherever the
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public static final Mode simMode = Mode.SIM;
+  public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+  public static enum Mode {
+    /** Running on a real robot. */
+    REAL,
+
+    /** Running a physics simulator. */
+    SIM,
+
+    /** Replaying from a log file. */
+    REPLAY
+  }
   // TODO: set CAN ids to match code
 
   public static final class IntakeSubsystemConstants {
-    public static final int kIntakeMotorCanId = 30;    // SPARK Flex CAN ID
-    public static final int kPivotMotorCanId = 31;     // SPARK Flex CAN ID (New Pivot Motor)
-    public static final int kConveyorMotorCanId = 23;  // SPARK Flex CAN ID
+    public static final int kIntakeMotorCanId = 30; // SPARK Flex CAN ID
+    public static final int kPivotMotorCanId = 31; // SPARK Flex CAN ID (New Pivot Motor)
+    public static final int kConveyorMotorCanId = 23; // SPARK Flex CAN ID
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.6;
@@ -43,9 +61,9 @@ public final class Constants {
   }
 
   public static final class ShooterSubsystemConstants {
-    public static final int kFeederMotorCanId = 22;    // SPARK Flex CAN ID
-    public static final int kFlywheelMotorCanId = 20;  // SPARK Flex CAN ID (Right)
-    public static final int kFlywheelFollowerMotorCanId = 21;  // SPARK Flex CAN ID (Left)
+    public static final int kFeederMotorCanId = 22; // SPARK Flex CAN ID
+    public static final int kFlywheelMotorCanId = 20; // SPARK Flex CAN ID (Right)
+    public static final int kFlywheelFollowerMotorCanId = 21; // SPARK Flex CAN ID (Left)
 
     public static final class FeederSetpoints {
       public static final double kFeed = 0.95;
@@ -69,12 +87,11 @@ public final class Constants {
     // Distance between front and back wheels on robot
     public static final double kWheelBase = Units.inchesToMeters(22.5);
 
-    public static final SwerveDriveKinematics kDriveKinematics =
-        new SwerveDriveKinematics(
-            new Translation2d(kWheelBase / 2, kTrackWidth / 2),
-            new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
-            new Translation2d(-kWheelBase / 2, kTrackWidth / 2),
-            new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
+    public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
+        new Translation2d(kWheelBase / 2, kTrackWidth / 2),
+        new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
+        new Translation2d(-kWheelBase / 2, kTrackWidth / 2),
+        new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
 
     // Angular offsets of the modules relative to the chassis in radians
     private static final double kEasySwerveAngularOffsetCompensation = Math.PI / 4;
@@ -83,8 +100,10 @@ public final class Constants {
     public static final double kBackLeftChassisAngularOffset = Math.PI + kEasySwerveAngularOffsetCompensation;
     public static final double kBackRightChassisAngularOffset = (Math.PI / 2) + kEasySwerveAngularOffsetCompensation;
 
-    // The EasySwerve module allows installation of the motors either on top or bottom of the module.
-    // These constants configure the location of the motors. The default configuration is with both
+    // The EasySwerve module allows installation of the motors either on top or
+    // bottom of the module.
+    // These constants configure the location of the motors. The default
+    // configuration is with both
     // motors on the bottom of the module.
     public static final boolean kFrontLeftDrivingMotorOnBottom = true;
     public static final boolean kRearLeftDrivingMotorOnBottom = true;
@@ -112,10 +131,11 @@ public final class Constants {
 
   public static final class NeoMotorConstants {
     public static final double kFreeSpeedRpm = 5676;
-    public static final double kVortexKv = 565;   // rpm/V
+    public static final double kVortexKv = 565; // rpm/V
   }
 
-  public static final class ModuleConstants {    // The EasySwerve module can only be configured with one pinion gears: 12T.
+  public static final class ModuleConstants { // The EasySwerve module can only be configured with one pinion gears:
+                                              // 12T.
     public static final int kDrivingMotorPinionTeeth = 12;
 
     // Calculations required for driving motor conversion factors and feed forward
@@ -127,7 +147,8 @@ public final class Constants {
     public static final double kDrivingWheelBevelGearTeeth = 45.0;
     public static final double kDrivingWheelFirstStageSpurGearTeeth = 30.0;
     public static final double kDrivingMotorBevelPinionTeeth = 15.0;
-    public static final double kDrivingMotorReduction = (kDrivingWheelBevelGearTeeth * kDrivingWheelFirstStageSpurGearTeeth)
+    public static final double kDrivingMotorReduction = (kDrivingWheelBevelGearTeeth
+        * kDrivingWheelFirstStageSpurGearTeeth)
         / (kDrivingMotorPinionTeeth * kDrivingMotorBevelPinionTeeth);
     public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters)
         / kDrivingMotorReduction;
@@ -150,9 +171,8 @@ public final class Constants {
     public static final double kPThetaController = 1;
 
     // Constraint for the motion profiled robot angle controller
-    public static final TrapezoidProfile.Constraints kThetaControllerConstraints =
-        new TrapezoidProfile.Constraints(
-            kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
+    public static final TrapezoidProfile.Constraints kThetaControllerConstraints = new TrapezoidProfile.Constraints(
+        kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
   }
 
 }
