@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+package frc.robot.subsystems.shooter;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -14,13 +14,19 @@ public interface ShooterIO {
   @AutoLog
   public static class ShooterIOInputs {
     // Flywheel
-    public double flywheelAppliedOutput = 0.0;
+    public double flywheelAppliedVoltage = 0.0;
     public double flywheelVelocity = 0.0; // RPM (matches REV encoder getVelocity output)
+    public double flywheelTargetVelocity = 0.0;
     public double flywheelCurrent = 0.0;
+    public boolean flywheelConnected = true;
+    public double flyFollowerAppliedVoltage = 0.0;
+    public boolean flyFollowerConnected = true;
 
     // Feeder
-    public double feederAppliedOutput = 0.0;
+    public double feederVelocity = 0.0; // RPM (matches REV encoder getVelocity output)
+    public double feederAppliedVoltage = 0.0;
     public double feederCurrent = 0.0;
+    public boolean feederConnected = true;
   }
 
   /** Update the inputs structure (called from subsystem periodic). */
