@@ -24,7 +24,10 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.ShooterIO;
+import frc.robot.subsystems.ShooterIOSim;
+import frc.robot.subsystems.ShooterIOSpark;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
@@ -44,8 +47,8 @@ import frc.robot.subsystems.drive.ModuleIOSpark;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   public Drive drive;
-  public IntakeSubsystem m_intake = new IntakeSubsystem();
-  public ShooterSubsystem m_shooter = new ShooterSubsystem();
+    public IntakeSubsystem m_intake = new IntakeSubsystem();
+    public Shooter m_shooter;
   private static RobotContainer m_Instance;
 
   // The driver's controller
@@ -58,40 +61,46 @@ public class RobotContainer {
 
     m_Instance = this;
 
-    switch (Constants.currentMode) {
-      case REAL:
-        // Real robot, instantiate hardware IO implementations
-        drive =
-            new Drive(
-                new GyroIONavX(),
-                new ModuleIOSpark(0),
-                new ModuleIOSpark(1),
-                new ModuleIOSpark(2),
-                new ModuleIOSpark(3));
-        break;
+        switch (Constants.currentMode) {
+            case REAL:
+                // Real robot, instantiate hardware IO implementations
+                drive =
+                        new Drive(
+                                new GyroIONavX(),
+                                new ModuleIOSpark(0),
+                                new ModuleIOSpark(1),
+                                new ModuleIOSpark(2),
+                                new ModuleIOSpark(3));
+                // Shooter uses hardware IO
+                m_shooter = new Shooter(new ShooterIOSpark());
+                break;
 
-      case SIM:
-        // Sim robot, instantiate physics sim IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim());
-        break;
+            case SIM:
+                // Sim robot, instantiate physics sim IO implementations
+                drive =
+                        new Drive(
+                                new GyroIO() {},
+                                new ModuleIOSim(),
+                                new ModuleIOSim(),
+                                new ModuleIOSim(),
+                                new ModuleIOSim());
+                // Shooter uses sim IO
+                m_shooter = new Shooter(new ShooterIOSim());
+                break;
 
-      default:
-        // Replayed robot, disable IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-        break;
-    }
+            default:
+                // Replayed robot, disable IO implementations. Use a no-op IO (default Shooter() is hardware;
+                // pass a minimal no-op instead to avoid hardware access during replay)
+                drive =
+                        new Drive(
+                                new GyroIO() {},
+                                new ModuleIO() {},
+                                new ModuleIO() {},
+                                new ModuleIO() {},
+                                new ModuleIO() {});
+                m_shooter = new Shooter(new ShooterIO() {});
+                break;
+        }
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
