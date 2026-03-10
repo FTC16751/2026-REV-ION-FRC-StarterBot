@@ -46,7 +46,7 @@ public class ShooterIOSim implements ShooterIO {
     private static final double MOMENT_OF_INERTIA = 0.009; // kg*m^2 (given)
     private static final double GEARING = 1.0; // 1:1
     FlywheelSim flywheelSim = new FlywheelSim(
-            LinearSystemId.createFlywheelSystem(FLYWHEEL_GEARBOX, MOMENT_OF_INERTIA, GEARING), FLYWHEEL_GEARBOX, null);
+            LinearSystemId.createFlywheelSystem(FLYWHEEL_GEARBOX, MOMENT_OF_INERTIA, GEARING), FLYWHEEL_GEARBOX);
     private double lastTime = Timer.getFPGATimestamp();
 
     public ShooterIOSim() {
