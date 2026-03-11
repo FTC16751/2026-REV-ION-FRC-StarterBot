@@ -159,8 +159,8 @@ public final class Constants {
     public static final double kVortexKv = 565; // rpm/V
   }
 
-  public static final class ModuleConstants { // The EasySwerve module can only be configured with one pinion gears:
-                                              // 12T.
+  public static final class ModuleConstants { 
+    // The EasySwerve module can only be configured with one pinion gears:
     public static final int kDrivingMotorPinionTeeth = 12;
 
     public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
@@ -176,9 +176,7 @@ public final class Constants {
     public static final double kDrivingWheelBevelGearTeeth = 45.0;
     public static final double kDrivingWheelFirstStageSpurGearTeeth = 30.0;
     public static final double kDrivingMotorBevelPinionTeeth = 15.0;
-    public static final double kDrivingMotorReduction = (kDrivingWheelBevelGearTeeth
-        * kDrivingWheelFirstStageSpurGearTeeth)
-        / (kDrivingMotorPinionTeeth * kDrivingMotorBevelPinionTeeth);
+    public static final double kDrivingMotorReduction = 6.3;
     public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters)
         / kDrivingMotorReduction;
 
@@ -200,9 +198,9 @@ public final class Constants {
 
     // Turn motor configuration
     public static final boolean turnInverted = false;
-    public static final int turnMotorCurrentLimit = 20;
-    public static final double turnMotorReduction = 9424.0 / 203.0;
-    public static final DCMotor turnGearbox = DCMotor.getNeo550(1);
+    public static final int turnMotorCurrentLimit = 40;
+    public static final double turnMotorReduction = 20.0;
+    public static final DCMotor turnGearbox = DCMotor.getNeoVortex(1);
 
     // Turn encoder configuration
     public static final boolean turnEncoderInverted = true;
