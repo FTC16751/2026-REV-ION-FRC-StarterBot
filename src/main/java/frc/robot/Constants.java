@@ -130,10 +130,10 @@ public final class Constants {
     public static final int kRearRightTurningCanId = 17;
 
     // Zeroed rotation values for each module, see setup instructions
-    public static final Rotation2d frontLeftZeroRotation = new Rotation2d(0.0);
-    public static final Rotation2d frontRightZeroRotation = new Rotation2d(0.0);
-    public static final Rotation2d backLeftZeroRotation = new Rotation2d(0.0);
-    public static final Rotation2d backRightZeroRotation = new Rotation2d(0.0);
+    public static final Rotation2d frontLeftZeroRotation = new Rotation2d(3.47);
+    public static final Rotation2d frontRightZeroRotation = new Rotation2d(3.8);
+    public static final Rotation2d backLeftZeroRotation = new Rotation2d(0.893);
+    public static final Rotation2d backRightZeroRotation = new Rotation2d(5.513);
 
     public static final boolean kGyroReversed = false;
 
@@ -203,7 +203,7 @@ public final class Constants {
     public static final DCMotor turnGearbox = DCMotor.getNeoVortex(1);
 
     // Turn encoder configuration
-    public static final boolean turnEncoderInverted = true;
+    public static final boolean turnEncoderInverted = false;
     public static final double turnEncoderPositionFactor = 2 * Math.PI; // Rotations -> Radians
     public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
 

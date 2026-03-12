@@ -114,25 +114,6 @@ public class RobotContainer {
     // Configure the trigger bindings
     configureBindings();
 
-
-
-    // Configure default commands
-    drive.setDefaultCommand(
-        // The left stick controls translation of the robot.
-        // Turning is controlled by the X axis of the right stick.
-        new RunCommand(
-            () ->
-                drive.runVelocity(
-                  new ChassisSpeeds(
-                    -MathUtil.applyDeadband(
-                        driveCtrlr.getLeftX(), OIConstants.kDriveDeadband),
-                    -MathUtil.applyDeadband(
-                        driveCtrlr.getLeftY(), OIConstants.kDriveDeadband),
-                    -MathUtil.applyDeadband(
-                        driveCtrlr.getRightX(), OIConstants.kDriveDeadband)
-                )),
-            drive).withName("Robot Drive Default"));
-
     SmartDashboard.putData(m_intake);
     SmartDashboard.putData(m_shooter);
 
@@ -162,7 +143,7 @@ public class RobotContainer {
   private void configureBindings() {
         // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
+        DriveCommands.joystickDriveRobot(
             drive,
             () -> -driveCtrlr.getLeftY(),
             () -> -driveCtrlr.getLeftX(),
