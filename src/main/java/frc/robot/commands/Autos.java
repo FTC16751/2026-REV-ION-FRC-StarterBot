@@ -11,6 +11,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
@@ -19,13 +20,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.drive.Drive;
 
 public final class Autos {
 
-  public static Command exampleAuto(DriveSubsystem drive) {
+  public static Command exampleAuto(Drive drive) {
     // Create config for trajectory
     TrajectoryConfig config =
         new TrajectoryConfig(
@@ -64,10 +65,10 @@ public final class Autos {
             drive);
 
     // Reset odometry to the starting pose of the trajectory.
-    drive.resetOdometry(exampleTrajectory.getInitialPose());
+    //drive.resetOdometry(exampleTrajectory.getInitialPose());
 
     // Run path following command, then stop at the end.
-    return swerveControllerCommand.andThen(() -> drive.drive(0, 0, 0, false));
+    return swerveControllerCommand.andThen(() -> drive.runVelocity(new ChassisSpeeds(0, 0, 0)));
   }
 
   /**
