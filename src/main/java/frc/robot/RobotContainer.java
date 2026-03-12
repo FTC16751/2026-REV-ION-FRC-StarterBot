@@ -132,7 +132,7 @@ public class RobotContainer {
   private void configureBindings() {
         // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
+        DriveCommands.joystickDriveRobot(
             drive,
             () -> -driveCtrlr.getLeftY(),
             () -> -driveCtrlr.getLeftX(),
