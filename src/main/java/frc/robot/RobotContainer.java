@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -31,6 +30,10 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOLimelight;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -43,10 +46,11 @@ import frc.robot.subsystems.drive.ModuleIOSpark;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
+  public Vision vision;
   public Drive drive;
   public IntakeSubsystem m_intake = new IntakeSubsystem();
   public ShooterSubsystem m_shooter = new ShooterSubsystem();
-  private static RobotContainer m_Instance;
+  private static RobotContainer instance;
 
   // The driver's controller
   private final CommandXboxController driveCtrlr = new CommandXboxController(OIConstants.kDriverControllerPort);
@@ -56,7 +60,7 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
-    m_Instance = this;
+    instance = this;
 
     switch (Constants.currentMode) {
       case REAL:
@@ -68,6 +72,11 @@ public class RobotContainer {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation));
+
         break;
 
       case SIM:
@@ -79,6 +88,12 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIO() {});
+
         break;
 
       default:
@@ -90,6 +105,11 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+                
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIO() {});
         break;
     }
 
@@ -195,6 +215,6 @@ public class RobotContainer {
   }
 
   public static RobotContainer getInstance() {
-    return m_Instance;
+    return instance;
   }
 }
