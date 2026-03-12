@@ -133,36 +133,6 @@ public class RobotContainer {
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     // Configure the trigger bindings
     configureBindings();
-
-
-
-    // Configure default commands
-    drive.setDefaultCommand(
-        // The left stick controls translation of the robot.
-        // Turning is controlled by the X axis of the right stick.
-        new RunCommand(
-            () ->
-                drive.runVelocity(
-                  new ChassisSpeeds(
-                    -MathUtil.applyDeadband(
-                        driveCtrlr.getLeftX(), OIConstants.kDriveDeadband),
-                    -MathUtil.applyDeadband(
-                        driveCtrlr.getLeftY(), OIConstants.kDriveDeadband),
-                    -MathUtil.applyDeadband(
-                        driveCtrlr.getRightX(), OIConstants.kDriveDeadband)
-                )),
-            drive).withName("Robot Drive Default"));
-
-    SmartDashboard.putData(m_intake);
-    SmartDashboard.putData(m_shooter);
-
-    SmartDashboard.putNumber("Bat Voltage", RobotController.getBatteryVoltage());
-
-    SmartDashboard.putData("Intake", m_intake.runIntakeCommand().withName("Intake - Intaking"));
-    SmartDashboard.putData("Extake", m_intake.runExtakeCommand().withName("Intake - Extaking"));
-
-    SmartDashboard.putData("Feeder", m_shooter.runFeederCommand().withName("Shooter - Feeding and Shooting"));
-    SmartDashboard.putData("Flywheel", m_shooter.runFlywheelCommand().withName("Shooter - Spinning up Flywheel"));
   }
 
   /**
@@ -182,7 +152,7 @@ public class RobotContainer {
   private void configureBindings() {
         // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
+        DriveCommands.joystickDriveRobot(
             drive,
             () -> -driveCtrlr.getLeftY(),
             () -> -driveCtrlr.getLeftX(),
