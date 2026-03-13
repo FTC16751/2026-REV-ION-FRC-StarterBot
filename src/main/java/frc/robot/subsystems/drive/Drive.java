@@ -20,7 +20,9 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -34,6 +36,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
@@ -325,5 +328,31 @@ public class Drive extends SubsystemBase {
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
     return Constants.DriveConstants.kMaxSpeedMetersPerSecond / Constants.DriveConstants.driveBaseRadius;
+  }
+
+    /**
+   * Is the field flipped (because on red alliance)
+   * 
+   * @return is on red Alliance
+   */
+  public static boolean isRedAlliance() {
+    return DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+  }
+
+  static Rectangle2d blueAllianceZone = new Rectangle2d(
+    new Translation2d(0,0), 
+    new Translation2d(Inches.of(156.61),Inches.of(317.69)));
+  static Rectangle2d redAllianceZone = new Rectangle2d(
+    new Translation2d(651.22,0), 
+    new Translation2d(Inches.of(469.11),Inches.of(317.69)));
+
+  public boolean inAllianceZone() {
+    Pose2d pose = getPose();
+    Rectangle2d allianceZone = isRedAlliance() ? redAllianceZone : blueAllianceZone;
+    return allianceZone.contains(pose.getTranslation());
+  }
+
+  public Trigger inAllianceZoneTrigger() {
+    return new Trigger(() -> inAllianceZone());
   }
 }

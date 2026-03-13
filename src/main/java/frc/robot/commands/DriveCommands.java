@@ -24,23 +24,34 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
+
+import static edu.wpi.first.units.Units.Inches;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
-  private static final double ANGLE_KP = 5.0;
+  private static final double ANGLE_KP = 10.0;
   private static final double ANGLE_KD = 0.4;
-  private static final double ANGLE_MAX_VELOCITY = 8.0;
-  private static final double ANGLE_MAX_ACCELERATION = 20.0;
+  private static final double ANGLE_MAX_VELOCITY = 30.0;
+  private static final double ANGLE_MAX_ACCELERATION = 30.0;
   private static final double FF_START_DELAY = 2.0; // Secs
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+
+  public static Optional<Pose2d> targetAimPose = Optional.empty();
+  public static final Pose2d centerField = new Pose2d(Inches.of(325.61), Inches.of(158.84), Rotation2d.kZero);
+  public static final Pose2d blueGoal = new Pose2d(Inches.of(182.11), Inches.of(158.84), Rotation2d.kZero);
+  public static final Pose2d redGoal = blueGoal.rotateAround(centerField.getTranslation(), Rotation2d.k180deg);
 
   private DriveCommands() {
   }
@@ -62,6 +73,11 @@ public class DriveCommands {
   /**
    * Field relative drive command using two joysticks (controlling linear and
    * angular velocities).
+   * @param drive drivebase
+   * @param xSupplier supplies velocity in field x  direction
+   * @param ySupplier supplies velocity in field y direction
+   * @param omegaSupplier supplies velocity for robot rotation
+   * @return Command for driving
    */
   public static Command joystickDrive(
       Drive drive,
@@ -85,11 +101,10 @@ public class DriveCommands {
               linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
               linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
               omega * drive.getMaxAngularSpeedRadPerSec());
-          boolean isFlipped = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
-                  isFlipped
+                  isFlipped()
                       ? drive.getRotation().plus(new Rotation2d(Math.PI))
                       : drive.getRotation()));
         },
@@ -99,6 +114,11 @@ public class DriveCommands {
   /**
    * Robot relative drive command using two joysticks (controlling linear and
    * angular velocities).
+   * @param drive drivebase
+   * @param xSupplier supplies velocity in robot direction
+   * @param ySupplier supplies velocity in robot direction
+   * @param omegaSupplier supplies velocity for robot rotation
+   * @return Command for driving
    */
   public static Command joystickDriveRobot(
       Drive drive,
@@ -131,6 +151,12 @@ public class DriveCommands {
    * Field relative drive command using joystick for linear control and PID for
    * angular control. Possible use cases include snapping to an angle, aiming at a
    * vision target, or controlling absolute rotation with a joystick.
+   * 
+   * @param drive drivebase
+   * @param xSupplier supplies velocity in field x direction
+   * @param ySupplier supplies velocity in field y direction
+   * @param rotationSupplier gives angle to drive at (0 degrees is away from blue alliance station).
+   * @return Command for driving
    */
   public static Command joystickDriveAtAngle(
       Drive drive,
@@ -162,11 +188,10 @@ public class DriveCommands {
               linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
               linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
               omega);
-          boolean isFlipped = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
-                  isFlipped
+                  isFlipped()
                       ? drive.getRotation().plus(new Rotation2d(Math.PI))
                       : drive.getRotation()));
         },
@@ -174,6 +199,107 @@ public class DriveCommands {
 
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+  }
+
+  /**
+   * Is the field flipped (because on red alliance)
+   * 
+   * @return is on red Alliance
+   */
+  public static boolean isFlipped() {
+    return DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+  }
+
+  /**
+   * Field Relative Drive at angle commanded by combo of two angle suppliers (such as a joystick x and y)
+   * @param drive
+   * @param xVelSupplier
+   * @param yVelSupplier
+   * @param xAngleSupplier
+   * @param yAngleSupplier
+   * @return
+   */
+  public static Command joystickDriveAbsoluteAngle (
+      Drive drive,
+      DoubleSupplier xVelSupplier,
+      DoubleSupplier yVelSupplier,
+      DoubleSupplier xAngleSupplier,
+      DoubleSupplier yAngleSupplier
+      )
+      {
+        
+    Supplier<Rotation2d> angle = () -> {
+      double x = xAngleSupplier.getAsDouble();
+      double y = yAngleSupplier.getAsDouble();
+      //check deadband
+      x = MathUtil.applyDeadband(x, DEADBAND);
+      y = MathUtil.applyDeadband(y, DEADBAND);
+      if (x ==0 && y == 0 ){
+        return drive.getRotation(); // in deadband, shouldn't be turning.
+      }
+      return new Rotation2d(Math.atan2(y, x)).rotateBy(isFlipped()?Rotation2d.k180deg:Rotation2d.kZero);
+    };
+        return joystickDriveAtAngle(drive, xVelSupplier, yVelSupplier, angle);
+      }
+  /**
+   * Field relative drive command using joystick for linear control 
+   * Rotates to follow drivebase velocity vector. 
+   * 
+   * @param drive drivebase
+   * @param xSupplier supplies velocity in field x direction
+   * @param ySupplier supplies velocity in field y direction
+   * @return Command for driving
+   */
+  public static Command joystickDriveSnake(
+      Drive drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier) {
+
+    return joystickDriveAbsoluteAngle(drive, xSupplier, ySupplier, xSupplier, ySupplier);
+
+  }
+
+  /**
+   * @return Pose2d of goal for current alliance
+   */
+  public static Pose2d getAllianceGoal() {
+    return isFlipped() ? redGoal : blueGoal;
+  }
+
+  /**
+   * sets the targetAimPose to the appropriate goal
+   */
+  public static void setGoalTarget() {
+    targetAimPose = Optional.of(getAllianceGoal());
+    Logger.recordOutput("targetAimPose", targetAimPose.get());
+  }
+
+  public static Command setGoalTargetCommand() {
+    return Commands.runOnce(() -> setGoalTarget());
+  }
+
+  /**
+   * Drives while aimed at target, field relative.
+   * 
+   * uses Pose2d targetAimPose for target location. defaults to allianceGoal if target not set.
+   * 
+   * @param drive drivebase
+   * @param xSupplier supplies velocity in field x direction
+   * @param ySupplier supplies velocity in field y direction
+   * @return Command for driving
+   */
+
+  public static Command joystickDriveAim(
+      Drive drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier) {
+
+    Supplier<Rotation2d> angle = () -> drive.getPose().getTranslation()
+        .minus(
+          targetAimPose.orElseGet(DriveCommands::getAllianceGoal) // default to alliance goal
+          .getTranslation()).getAngle().plus(Rotation2d.k180deg);
+    ;
+    return joystickDriveAtAngle(drive, xSupplier, ySupplier, angle);
   }
 
   /**
