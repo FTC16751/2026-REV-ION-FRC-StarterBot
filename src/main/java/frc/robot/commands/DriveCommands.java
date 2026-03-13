@@ -31,7 +31,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -48,7 +47,6 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
-  public static Optional<Pose2d> targetAimPose = Optional.empty();
   public static final Pose2d centerField = new Pose2d(Inches.of(325.61), Inches.of(158.84), Rotation2d.kZero);
   public static final Pose2d blueGoal = new Pose2d(Inches.of(182.11), Inches.of(158.84), Rotation2d.kZero);
   public static final Pose2d redGoal = blueGoal.rotateAround(centerField.getTranslation(), Rotation2d.k180deg);
@@ -266,16 +264,8 @@ public class DriveCommands {
     return isFlipped() ? redGoal : blueGoal;
   }
 
-  /**
-   * sets the targetAimPose to the appropriate goal
-   */
-  public static void setGoalTarget() {
-    targetAimPose = Optional.of(getAllianceGoal());
-    Logger.recordOutput("targetAimPose", targetAimPose.get());
-  }
-
   public static Command setGoalTargetCommand() {
-    return Commands.runOnce(() -> setGoalTarget());
+    return Commands.runOnce(() -> DriveCommands.setGoalTarget());
   }
 
   /**
@@ -294,10 +284,7 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier) {
 
-    Supplier<Rotation2d> angle = () -> drive.getPose().getTranslation()
-        .minus(
-          targetAimPose.orElseGet(DriveCommands::getAllianceGoal) // default to alliance goal
-          .getTranslation()).getAngle().plus(Rotation2d.k180deg);
+    Supplier<Rotation2d> angle = () -> drive.rotationToTarget().plus(Rotation2d.k180deg);
     ;
     return joystickDriveAtAngle(drive, xSupplier, ySupplier, angle);
   }
@@ -440,4 +427,13 @@ public class DriveCommands {
     Rotation2d lastAngle = Rotation2d.kZero;
     double gyroDelta = 0.0;
   }
+
+/**
+ * sets the targetAimPose to the appropriate goal
+ */
+public static void setGoalTarget() {
+  Pose2d pose = getAllianceGoal();
+  Drive.setTargetAimPose(pose);
+  Logger.recordOutput("targetAimPose", pose);
+}
 }

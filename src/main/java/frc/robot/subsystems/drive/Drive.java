@@ -30,6 +30,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -40,7 +41,10 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.commands.DriveCommands;
 import frc.robot.util.LocalADStarAK;
+
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -52,20 +56,31 @@ public class Drive extends SubsystemBase {
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   private final SysIdRoutine sysId;
-  private final Alert gyroDisconnectedAlert =
-      new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
+  private final Alert gyroDisconnectedAlert = new Alert("Disconnected gyro, using kinematics as fallback.",
+      AlertType.kError);
 
   private SwerveDriveKinematics kinematics = Constants.DriveConstants.kDriveKinematics;
   private Rotation2d rawGyroRotation = Rotation2d.kZero;
   private SwerveModulePosition[] lastModulePositions = // For delta tracking
       new SwerveModulePosition[] {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
+          new SwerveModulePosition(),
+          new SwerveModulePosition(),
+          new SwerveModulePosition(),
+          new SwerveModulePosition()
       };
-  private SwerveDrivePoseEstimator poseEstimator =
-      new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
+  private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation,
+      lastModulePositions, Pose2d.kZero);
+  private static Optional<Pose2d> targetAimPose = Optional.empty();
+  private static Optional<Translation2d> targetTranslation = Optional.empty();
+
+  public static void setTargetAimPose(Pose2d targetAimPose) {
+    Drive.targetAimPose = Optional.of(targetAimPose);
+    Drive.targetTranslation = Optional.empty();
+  }
+
+  public static Optional<Pose2d> getTargetAimPose() {
+    return targetAimPose;
+  }
 
   public Drive(
       GyroIO gyroIO,
@@ -107,15 +122,14 @@ public class Drive extends SubsystemBase {
         });
 
     // Configure SysId
-    sysId =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                null,
-                null,
-                null,
-                (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+    sysId = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            null,
+            null,
+            null,
+            (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+        new SysIdRoutine.Mechanism(
+            (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
   }
 
   @Override
@@ -142,8 +156,7 @@ public class Drive extends SubsystemBase {
     }
 
     // Update odometry
-    double[] sampleTimestamps =
-        modules[0].getOdometryTimestamps(); // All signals are sampled together
+    double[] sampleTimestamps = modules[0].getOdometryTimestamps(); // All signals are sampled together
     int sampleCount = sampleTimestamps.length;
     for (int i = 0; i < sampleCount; i++) {
       // Read wheel positions and deltas from each module
@@ -151,11 +164,10 @@ public class Drive extends SubsystemBase {
       SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
         modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
-        moduleDeltas[moduleIndex] =
-            new SwerveModulePosition(
-                modulePositions[moduleIndex].distanceMeters
-                    - lastModulePositions[moduleIndex].distanceMeters,
-                modulePositions[moduleIndex].angle);
+        moduleDeltas[moduleIndex] = new SwerveModulePosition(
+            modulePositions[moduleIndex].distanceMeters
+                - lastModulePositions[moduleIndex].distanceMeters,
+            modulePositions[moduleIndex].angle);
         lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
       }
 
@@ -175,6 +187,9 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+
+    // clear memoized targetTranslation
+    targetTranslation = Optional.empty();
   }
 
   /**
@@ -214,8 +229,10 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * Stops the drive and turns the modules to an X arrangement to resist movement. The modules will
-   * return to their normal orientations the next time a nonzero velocity is requested.
+   * Stops the drive and turns the modules to an X arrangement to resist movement.
+   * The modules will
+   * return to their normal orientations the next time a nonzero velocity is
+   * requested.
    */
   public void stopWithX() {
     Rotation2d[] headings = new Rotation2d[4];
@@ -238,7 +255,10 @@ public class Drive extends SubsystemBase {
     return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
   }
 
-  /** Returns the module states (turn angles and drive velocities) for all of the modules. */
+  /**
+   * Returns the module states (turn angles and drive velocities) for all of the
+   * modules.
+   */
   @AutoLogOutput(key = "SwerveStates/Measured")
   private SwerveModuleState[] getModuleStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
@@ -248,16 +268,18 @@ public class Drive extends SubsystemBase {
     return states;
   }
 
-  
   public void setModuleStates(SwerveModuleState[] desiredStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(
-        desiredStates, Constants.DriveConstants.kMaxSpeedMetersPerSecond);        
+        desiredStates, Constants.DriveConstants.kMaxSpeedMetersPerSecond);
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(desiredStates[i]);
     }
   }
 
-  /** Returns the module positions (turn angles and drive positions) for all of the modules. */
+  /**
+   * Returns the module positions (turn angles and drive positions) for all of the
+   * modules.
+   */
   private SwerveModulePosition[] getModulePositions() {
     SwerveModulePosition[] states = new SwerveModulePosition[4];
     for (int i = 0; i < 4; i++) {
@@ -330,7 +352,7 @@ public class Drive extends SubsystemBase {
     return Constants.DriveConstants.kMaxSpeedMetersPerSecond / Constants.DriveConstants.driveBaseRadius;
   }
 
-    /**
+  /**
    * Is the field flipped (because on red alliance)
    * 
    * @return is on red Alliance
@@ -340,11 +362,11 @@ public class Drive extends SubsystemBase {
   }
 
   static Rectangle2d blueAllianceZone = new Rectangle2d(
-    new Translation2d(0,0), 
-    new Translation2d(Inches.of(156.61),Inches.of(317.69)));
+      new Translation2d(0, 0),
+      new Translation2d(Inches.of(156.61), Inches.of(317.69)));
   static Rectangle2d redAllianceZone = new Rectangle2d(
-    new Translation2d(651.22,0), 
-    new Translation2d(Inches.of(469.11),Inches.of(317.69)));
+      new Translation2d(651.22, 0),
+      new Translation2d(Inches.of(469.11), Inches.of(317.69)));
 
   public boolean inAllianceZone() {
     Pose2d pose = getPose();
@@ -354,5 +376,28 @@ public class Drive extends SubsystemBase {
 
   public Trigger inAllianceZoneTrigger() {
     return new Trigger(() -> inAllianceZone());
+  }
+
+  public Rotation2d rotationToTarget() {
+    return translationToTarget().getAngle();
+  }
+
+  public Distance distanceToTarget() {
+    return Meters.of( translationToTarget().getDistance(Translation2d.kZero));
+  }
+
+
+  /**
+   * Calculates location of target if not previously calculated this loop cycle
+   * @return robot relative location to target
+   */
+  private Translation2d translationToTarget() {
+    if(targetTranslation.isEmpty()) {
+      targetTranslation = Optional.of(getPose().getTranslation()
+        .minus(
+            targetAimPose.orElseGet(DriveCommands::getAllianceGoal) // default to alliance goal
+                .getTranslation()));
+    }
+    return targetTranslation.get();
   }
 }
