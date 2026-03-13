@@ -23,6 +23,9 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.intake.Intake;
 
 public final class Autos {
 
