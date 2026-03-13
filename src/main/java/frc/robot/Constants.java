@@ -60,9 +60,15 @@ public final class Constants {
 
     public static final class PivotSetpoints {
       // TODO: check these if they need to be reversed?
-      public static final double kRetractedDegrees = 0.0; // Vertical / Stowed
-      public static final double kDeployedDegrees = 90.0; // Horizontal / Intake position
+      public static final double kRetractedDegrees = 90.0; // Vertical / Stowed
+      public static final double kDeployedDegrees = 0.0; // Horizontal / Intake position
     }
+
+    // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
+    public static final double ARM_LENGTH_METERS = 0.254; // 10 inches
+    public static final double ARM_MASS_KG = 1.0; // 1 kg
+    // Use a modest gearing (motor -> arm) to match configs pivot conversion factor; use 36:1 as in Configs comments
+    public static final double GEARING = 36.0;
   }
 
   public static final class ShooterSubsystemConstants {

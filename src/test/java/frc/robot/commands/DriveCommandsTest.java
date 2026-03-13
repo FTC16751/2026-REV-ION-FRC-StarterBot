@@ -14,7 +14,6 @@ public class DriveCommandsTest {
 
   // Lightweight test Drive that captures the last ChassisSpeeds passed to runVelocity
   private static class TestDrive extends Drive {
-    private ChassisSpeeds lastSpeedsRobot = new ChassisSpeeds();
     private ChassisSpeeds lastSpeedsField = new ChassisSpeeds();
     private Rotation2d rotation = Rotation2d.kZero;
 
@@ -34,9 +33,6 @@ public class DriveCommandsTest {
 
     @Override
     public void runVelocity(ChassisSpeeds speeds) {
-      // Capture robot-relative speeds so tests can inspect them. Don't call super to avoid module IO.
-      lastSpeedsRobot = speeds;
-
       // Convert robot-relative speeds back to field-relative for assertions:
       double theta = rotation.getRadians();
       double vx_r = speeds.vxMetersPerSecond;

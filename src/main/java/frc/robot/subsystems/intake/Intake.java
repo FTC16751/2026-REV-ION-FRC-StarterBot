@@ -1,21 +1,36 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
+
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.IntakeSubsystemConstants.ConveyorSetpoints;
 import frc.robot.Constants.IntakeSubsystemConstants.IntakeSetpoints;
 import frc.robot.Constants.IntakeSubsystemConstants.PivotSetpoints;
 
-/** Intake subsystem that delegates hardware access to an IntakeIO implementation. */
+/**
+ * Intake subsystem that delegates hardware access to an IntakeIO
+ * implementation.
+ */
 public class Intake extends SubsystemBase {
   private final IntakeIO io;
-  private final IntakeIO.IntakeIOInputs inputs = new IntakeIO.IntakeIOInputs();
+  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+  private LoggedMechanism2d mechanism = new LoggedMechanism2d(3, 3);
+  private LoggedMechanismLigament2d armLig;
 
   public Intake(IntakeIO io) {
     this.io = io;
+    armLig = new LoggedMechanismLigament2d("IntakeArm", Meters.of(Constants.IntakeSubsystemConstants.ARM_LENGTH_METERS),
+        Degrees.of(Constants.IntakeSubsystemConstants.PivotSetpoints.kRetractedDegrees));
+    mechanism.getRoot("IntakeBase", Inches.of(20).in(Meters), Inches.of(0).in(Meters)).append(armLig);
     System.out.println("---> Intake initialized (IO based)");
   }
 
@@ -38,16 +53,26 @@ public class Intake extends SubsystemBase {
 
   public Command runIntakeCommand() {
     return this.startEnd(
-        () -> { this.setIntakePower(IntakeSetpoints.kIntake); this.setConveyorPower(ConveyorSetpoints.kIntake); },
-        () -> { this.setIntakePower(0.0); this.setConveyorPower(0.0); }
-    ).withName("Intaking");
+        () -> {
+          this.setIntakePower(IntakeSetpoints.kIntake);
+          this.setConveyorPower(ConveyorSetpoints.kIntake);
+        },
+        () -> {
+          this.setIntakePower(0.0);
+          this.setConveyorPower(0.0);
+        }).withName("Intaking");
   }
 
   public Command runExtakeCommand() {
     return this.startEnd(
-        () -> { this.setIntakePower(IntakeSetpoints.kExtake); this.setConveyorPower(ConveyorSetpoints.kExtake); },
-        () -> { this.setIntakePower(0.0); this.setConveyorPower(0.0); }
-    ).withName("Extaking");
+        () -> {
+          this.setIntakePower(IntakeSetpoints.kExtake);
+          this.setConveyorPower(ConveyorSetpoints.kExtake);
+        },
+        () -> {
+          this.setIntakePower(0.0);
+          this.setConveyorPower(0.0);
+        }).withName("Extaking");
   }
 
   public Command runIntakeForTime(double seconds) {
@@ -57,8 +82,7 @@ public class Intake extends SubsystemBase {
   public Command runConveyorCommand() {
     return this.startEnd(
         () -> this.setConveyorPower(ConveyorSetpoints.kIntake),
-        () -> this.setConveyorPower(0.0)
-    ).withName("Run Conveyor");
+        () -> this.setConveyorPower(0.0)).withName("Run Conveyor");
   }
 
   public Command deployIntakeCommand() {
@@ -71,9 +95,9 @@ public class Intake extends SubsystemBase {
 
   @Override
   public void periodic() {
-  io.updateInputs(inputs);
-
-    // Also put a couple values on SmartDashboard for convenience
-    SmartDashboard.putNumber("Intake | Pivot | Position (Deg)", inputs.pivotPosition);
+    io.updateInputs(inputs);
+    armLig.setAngle(Degrees.of(inputs.pivotPosition));
+    Logger.processInputs("Intake", inputs);
   }
+
 }

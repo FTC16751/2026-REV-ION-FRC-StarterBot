@@ -11,40 +11,41 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 import frc.robot.Constants.IntakeSubsystemConstants;
 
-
-/** Simulation IO for the Intake using SparkFlexSim and a SingleJointedArmSim for the pivot */
+/**
+ * Simulation IO for the Intake using SparkFlexSim and a SingleJointedArmSim for
+ * the pivot
+ */
 public class IntakeIOSim implements IntakeIO {
   // Motors
   private final SparkFlex intakeSpark = new SparkFlex(IntakeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
-  private final SparkFlex conveyorSpark = new SparkFlex(IntakeSubsystemConstants.kConveyorMotorCanId, MotorType.kBrushless);
+  private final SparkFlex conveyorSpark = new SparkFlex(IntakeSubsystemConstants.kConveyorMotorCanId,
+      MotorType.kBrushless);
   private final SparkFlex pivotSpark = new SparkFlex(IntakeSubsystemConstants.kPivotMotorCanId, MotorType.kBrushless);
 
   private final SparkFlexSim intakeSim = new SparkFlexSim(intakeSpark, DCMotor.getNeoVortex(1));
   private final SparkFlexSim conveyorSim = new SparkFlexSim(conveyorSpark, DCMotor.getNeoVortex(1));
   private final SparkFlexSim pivotSim = new SparkFlexSim(pivotSpark, DCMotor.getNeoVortex(1));
 
-  // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
-  private static final double ARM_LENGTH_METERS = 0.254; // 10 inches
-  private static final double ARM_MASS_KG = 1.0; // 1 kg
-  // Use a modest gearing (motor -> arm) to match configs pivot conversion factor; use 36:1 as in Configs comments
-  private static final double GEARING = 36.0;
   // The authoritative arm sim using WPILib's SingleJointedArmSim
   private final SingleJointedArmSim armSim;
 
   private double lastTime = Timer.getFPGATimestamp();
 
   public IntakeIOSim() {
-    // Use WPILib's SingleJointedArmSim constructor that takes (DCMotor, gearing, jKgMetersSquared,
-    // armLengthMeters, minAngleRads, maxAngleRads, simulateGravity, startingAngleRads)
-    double moi = SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, ARM_MASS_KG);
+    // Use WPILib's SingleJointedArmSim constructor that takes (DCMotor, gearing,
+    // jKgMetersSquared,
+    // armLengthMeters, minAngleRads, maxAngleRads, simulateGravity,
+    // startingAngleRads)
+    double moi = SingleJointedArmSim.estimateMOI(IntakeSubsystemConstants.ARM_LENGTH_METERS,
+        IntakeSubsystemConstants.ARM_MASS_KG);
     // Limit pivot between 0 deg (retracted) and 90 deg (deployed)
     double minAngle = 0.0;
     double maxAngle = Math.PI / 2.0;
     armSim = new SingleJointedArmSim(
         DCMotor.getNeoVortex(1),
-        GEARING,
+        IntakeSubsystemConstants.GEARING,
         moi,
-        ARM_LENGTH_METERS,
+        IntakeSubsystemConstants.ARM_LENGTH_METERS,
         minAngle,
         maxAngle,
         true,
@@ -59,47 +60,52 @@ public class IntakeIOSim implements IntakeIO {
 
     double battery = RobotController.getBatteryVoltage();
 
-    // Iterate spark sims so controllers update their internal state
+    // First, iterate intake & conveyor sims so controllers update their internal state
     intakeSim.iterate(now, dt, battery);
     conveyorSim.iterate(now, dt, battery);
-    pivotSim.iterate(now, dt, battery);
 
-    // Intake & conveyor: read applied voltage/current from the Spark
-    inputs.intakeAppliedVoltage = intakeSpark.getAppliedOutput() * battery;
-    inputs.conveyorAppliedVoltage = conveyorSpark.getAppliedOutput() * battery;
-
-    // Pivot: drive arm sim with motor applied voltage
-    double appliedVolts = pivotSpark.getAppliedOutput() * battery;
-    armSim.setInputVoltage(appliedVolts);
+    // Drive arm sim with motor applied voltage from the last spark sim iteration
+    double appliedVoltsPrev = pivotSpark.getAppliedOutput() * battery;
+    armSim.setInputVoltage(appliedVoltsPrev);
     armSim.update(dt);
     double angleRad = armSim.getAngleRads();
     double angleDeg = Math.toDegrees(angleRad);
+
+    // Publish the measured encoder position/velocity to the Spark sim BEFORE
+    // iterating the pivot Spark sim so the closed-loop controller sees the
+    // current plant state when it computes outputs for this timestep.
+    var encSim = pivotSim.getExternalEncoderSim();
+    // The Spark encoder is configured to report degrees (Configs sets
+    // positionConversionFactor accordingly)
+    encSim.setPosition(angleDeg);
+    // Convert arm sim velocity (rad/s) to degrees/sec for the encoder sim
+    encSim.setVelocity(Math.toDegrees(armSim.getVelocityRadPerSec()));
+
+    // Now iterate pivot sim so its closed-loop controller reads the encoder we
+    // just wrote and computes an output for this timestep.
+    pivotSim.iterate(now, dt, battery);
+
+    // Read applied voltage/current from the Spark
+    inputs.intakeAppliedVoltage = intakeSpark.getAppliedOutput() * battery;
+    inputs.conveyorAppliedVoltage = conveyorSpark.getAppliedOutput() * battery;
+
+    double appliedVolts = pivotSpark.getAppliedOutput() * battery;
 
     // Publish pivot state
     inputs.pivotPosition = angleDeg;
     inputs.pivotAppliedVoltage = appliedVolts;
     inputs.pivotCurrent = Math.abs(armSim.getCurrentDrawAmps());
-    // Try to read target setpoint from the pivot Spark's closed loop controller
     try {
       inputs.pivotTargetPosition = pivotSpark.getClosedLoopController().getSetpoint();
-    } catch (Exception ignored) {}
-
-    // Push simulated encoder position back into the SparkFlex external encoder sim so the controller can read it
-    try {
-      var encSim = pivotSim.getExternalEncoderSim();
-      // The Spark encoder is configured to report degrees (Configs sets positionConversionFactor accordingly)
-      encSim.setPosition(angleDeg);
-      encSim.setVelocity(armSim.getVelocityRadPerSec());
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      inputs.pivotTargetPosition = 0.0;
     }
   }
 
   @Override
   public void setPivotPosition(double degrees) {
-    try {
       pivotSpark.getClosedLoopController().setSetpoint(degrees, com.revrobotics.spark.SparkBase.ControlType.kPosition);
-    } catch (Exception ignored) {
-    }
+
   }
 
   @Override
@@ -114,8 +120,8 @@ public class IntakeIOSim implements IntakeIO {
 
   @Override
   public void stop() {
-    try { intakeSpark.stopMotor(); } catch (Exception ignored) {}
-    try { conveyorSpark.stopMotor(); } catch (Exception ignored) {}
-    try { pivotSpark.stopMotor(); } catch (Exception ignored) {}
+      intakeSpark.stopMotor();
+      conveyorSpark.stopMotor();
+      pivotSpark.stopMotor();
   }
 }
