@@ -44,8 +44,8 @@ public final class Constants {
   // TODO: set CAN ids to match code
 
   public static final class IntakeSubsystemConstants {
-    public static final int kIntakeMotorCanId = 30; // SPARK Flex CAN ID
-    public static final int kPivotMotorCanId = 31; // SPARK Flex CAN ID (New Pivot Motor)
+    public static final int kIntakeMotorCanId = 31; // SPARK Flex CAN ID
+    public static final int kPivotMotorCanId = 30; // SPARK Flex CAN ID (New Pivot Motor)
     public static final int kConveyorMotorCanId = 23; // SPARK Flex CAN ID
 
     public static final class IntakeSetpoints {

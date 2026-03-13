@@ -22,9 +22,9 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.DriveCommands;
-import frc.robot.subsystems.IntakeSubsystem;
+//import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.ShooterSubsystem;
+//import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
@@ -53,11 +53,379 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   public Vision vision;
   public Drive drive;
-    public IntakeSubsystem m_intake = new IntakeSubsystem();
-    public Shooter m_shooter;
-  private static RobotContainer m_Instance;
+  public Shooter m_shooter;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   public Intake m_intake;
-  public ShooterSubsystem m_shooter = new ShooterSubsystem();
   private static RobotContainer instance;
 
   // The driver's controller
@@ -70,49 +438,8 @@ public class RobotContainer {
 
     instance = this;
 
-        switch (Constants.currentMode) {
-            case REAL:
-                // Real robot, instantiate hardware IO implementations
-                drive =
-                        new Drive(
-                                new GyroIONavX(),
-                                new ModuleIOSpark(0),
-                                new ModuleIOSpark(1),
-                                new ModuleIOSpark(2),
-                                new ModuleIOSpark(3));
-                // Shooter uses hardware IO
-                m_shooter = new Shooter(new ShooterIOSpark());
-                break;
-
-            case SIM:
-                // Sim robot, instantiate physics sim IO implementations
-                drive =
-                        new Drive(
-                                new GyroIO() {},
-                                new ModuleIOSim(),
-                                new ModuleIOSim(),
-                                new ModuleIOSim(),
-                                new ModuleIOSim());
-                // Shooter uses sim IO
-                m_shooter = new Shooter(new ShooterIOSim());
-                break;
-
-            default:
-                // Replayed robot, disable IO implementations. Use a no-op IO (default Shooter() is hardware;
-                // pass a minimal no-op instead to avoid hardware access during replay)
-                drive =
-                        new Drive(
-                                new GyroIO() {},
-                                new ModuleIO() {},
-                                new ModuleIO() {},
-                                new ModuleIO() {},
-                                new ModuleIO() {});
-                m_shooter = new Shooter(new ShooterIO() {});
-                break;
-        }
     switch (Constants.currentMode) {
       case REAL:
-        // Real robot, instantiate hardware IO implementations
         drive =
             new Drive(
                 new GyroIONavX(),
@@ -120,17 +447,15 @@ public class RobotContainer {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
-                // Intake uses hardware IO
-                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
+        m_shooter = new Shooter(new ShooterIOSpark());
+        m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
         vision =
             new Vision(
                 drive::addVisionMeasurement,
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation));
-
         break;
 
       case SIM:
-        // Sim robot, instantiate physics sim IO implementations
         drive =
             new Drive(
                 new GyroIO() {},
@@ -138,18 +463,12 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
-                // Intake uses sim IO
-                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSim());
-
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                new VisionIO() {});
-
+        m_shooter = new Shooter(new ShooterIOSim());
+        m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSim());
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
         break;
 
       default:
-        // Replayed robot, disable IO implementations
         drive =
             new Drive(
                 new GyroIO() {},
@@ -157,12 +476,9 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
-                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIO() {});
-                
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                new VisionIO() {});
+        m_shooter = new Shooter(new ShooterIO() {});
+        m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIO() {});
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
         break;
     }
 
@@ -253,8 +569,37 @@ public class RobotContainer {
         .leftTrigger(OIConstants.kTriggerButtonThreshold)
         .whileTrue(m_intake.runExtakeCommand());
 
-    // Y Button -> Run intake and run the shooter flywheel and feeder
-    driveCtrlr.y().toggleOnTrue(m_shooter.runShooterCommand().alongWith(m_intake.runIntakeCommand()));
+    // Y Button -> Spin up flywheel, then run feeder + conveyor once at speed
+    driveCtrlr.y().toggleOnTrue(
+        m_shooter.runShooterCommand()
+            .alongWith(
+                Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                    .andThen(m_intake.runIntakeCommand())));
+
+    // D-pad snap to heading (field-relative)
+    driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(0)));
+
+    driveCtrlr.povRight().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(-90)));
+
+    driveCtrlr.povDown().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(180)));
+
+    driveCtrlr.povLeft().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(90)));
 
   }
 
