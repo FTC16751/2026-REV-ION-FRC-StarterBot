@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.DriveCommands;
-import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -48,7 +48,7 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   public Vision vision;
   public Drive drive;
-  public IntakeSubsystem m_intake = new IntakeSubsystem();
+  public Intake m_intake;
   public ShooterSubsystem m_shooter = new ShooterSubsystem();
   private static RobotContainer instance;
 
@@ -72,6 +72,8 @@ public class RobotContainer {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
+                // Intake uses hardware IO
+                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
         vision =
             new Vision(
                 drive::addVisionMeasurement,
@@ -88,6 +90,8 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+                // Intake uses sim IO
+                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSim());
 
         vision =
             new Vision(
@@ -105,6 +109,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIO() {});
                 
         vision =
             new Vision(
