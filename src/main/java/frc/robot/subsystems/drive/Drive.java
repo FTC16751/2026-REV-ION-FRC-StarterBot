@@ -383,20 +383,21 @@ public class Drive extends SubsystemBase {
   }
 
   public Distance distanceToTarget() {
-    return Meters.of( translationToTarget().getDistance(Translation2d.kZero));
+    return Meters.of(translationToTarget().getDistance(Translation2d.kZero));
   }
-
 
   /**
    * Calculates location of target if not previously calculated this loop cycle
+   * 
    * @return robot relative location to target
    */
   private Translation2d translationToTarget() {
-    if(targetTranslation.isEmpty()) {
-      targetTranslation = Optional.of(getPose().getTranslation()
-        .minus(
-            targetAimPose.orElseGet(DriveCommands::getAllianceGoal) // default to alliance goal
-                .getTranslation()));
+    if (targetTranslation.isEmpty()) {
+
+      Pose2d targetPose = targetAimPose.orElseGet(DriveCommands::getAllianceGoal); // default to alliance goal
+      targetTranslation = Optional.of(
+          getPose().minus(targetPose)
+              .getTranslation());
     }
     return targetTranslation.get();
   }
