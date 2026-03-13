@@ -1,0 +1,103 @@
+package frc.robot.subsystems.intake;
+
+import static frc.robot.util.SparkUtil.*;
+
+import java.util.function.DoubleSupplier;
+
+import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+
+import edu.wpi.first.math.filter.Debouncer;
+import frc.robot.Configs;
+import frc.robot.Constants.IntakeSubsystemConstants;
+
+/** Hardware IO implementation for the intake using Spark Flex controllers. */
+public class IntakeIOSpark implements IntakeIO {
+  private final SparkFlex intakeMotor = new SparkFlex(IntakeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
+  private final SparkFlex conveyorMotor = new SparkFlex(IntakeSubsystemConstants.kConveyorMotorCanId, MotorType.kBrushless);
+
+  private final SparkFlex pivotMotor = new SparkFlex(IntakeSubsystemConstants.kPivotMotorCanId, MotorType.kBrushless);
+  private final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
+  private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
+
+  private final Debouncer intakeDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
+  private final Debouncer conveyorDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
+  private final Debouncer pivotDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
+
+  public IntakeIOSpark() {
+    intakeMotor.configure(
+        Configs.IntakeSubsystem.intakeConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    conveyorMotor.configure(
+        Configs.IntakeSubsystem.conveyorConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    pivotMotor.configure(
+        Configs.IntakeSubsystem.pivotConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    pivotEncoder.setPosition(0.0);
+  }
+
+  @Override
+  public void updateInputs(IntakeIO.IntakeIOInputs inputs) {
+    // Intake
+    sparkStickyFault = false;
+    ifOk(intakeMotor, new DoubleSupplier[] { intakeMotor::getAppliedOutput, intakeMotor::getBusVoltage }, (values) -> {
+      inputs.intakeAppliedVoltage = values[0] * values[1];
+    });
+    inputs.intakeConnected = intakeDebouncer.calculate(!sparkStickyFault);
+
+    // Conveyor
+    sparkStickyFault = false;
+    ifOk(conveyorMotor, new DoubleSupplier[] { conveyorMotor::getAppliedOutput, conveyorMotor::getBusVoltage }, (values) -> {
+      inputs.conveyorAppliedVoltage = values[0] * values[1];
+    });
+    inputs.conveyorConnected = conveyorDebouncer.calculate(!sparkStickyFault);
+
+    // Pivot
+    sparkStickyFault = false;
+    ifOk(pivotMotor, pivotEncoder::getPosition, (value) -> inputs.pivotPosition = value);
+    ifOk(pivotMotor, new DoubleSupplier[] { pivotMotor::getAppliedOutput, pivotMotor::getBusVoltage }, (values) -> {
+      inputs.pivotAppliedVoltage = values[0] * values[1];
+    });
+    ifOk(pivotMotor, pivotMotor::getOutputCurrent, (value) -> inputs.pivotCurrent = value);
+    try {
+      inputs.pivotTargetPosition = pivotController.getSetpoint();
+    } catch (Exception ignored) {
+      // controller may not be available
+    }
+    inputs.pivotConnected = pivotDebouncer.calculate(!sparkStickyFault);
+  }
+
+  @Override
+  public void setIntakePower(double power) {
+    intakeMotor.set(power);
+  }
+
+  @Override
+  public void setConveyorPower(double power) {
+    conveyorMotor.set(power);
+  }
+
+  @Override
+  public void setPivotPosition(double degrees) {
+    pivotController.setSetpoint(degrees, ControlType.kPosition);
+  }
+
+  @Override
+  public void stop() {
+    try { intakeMotor.stopMotor(); } catch (Exception ignored) {}
+    try { conveyorMotor.stopMotor(); } catch (Exception ignored) {}
+    try { pivotMotor.stopMotor(); } catch (Exception ignored) {}
+  }
+}

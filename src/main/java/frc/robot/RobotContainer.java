@@ -17,14 +17,19 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.DriveCommands;
-import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.ShooterSubsystem;
+//import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.intake.Intake;
+//import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.subsystems.shooter.ShooterIOSpark;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -40,12 +45,383 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-    // The robot's subsystems and commands are defined here...
-    public Vision vision;
-    public Drive drive;
-    public IntakeSubsystem m_intake = new IntakeSubsystem();
-    public ShooterSubsystem m_shooter = new ShooterSubsystem();
-    private static RobotContainer instance;
+  // The robot's subsystems and commands are defined here...
+  public Vision vision;
+  public Drive drive;
+  public Shooter m_shooter;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public Intake m_intake;
+  private static RobotContainer instance;
 
     // The driver's controller
     private final CommandXboxController driveCtrlr = new CommandXboxController(OIConstants.kDriverControllerPort);
@@ -61,48 +437,45 @@ public class RobotContainer {
 
         switch (Constants.currentMode) {
             case REAL:
-                // Real robot, instantiate hardware IO implementations
-                drive = new Drive(
+                        drive = new Drive(
                         new GyroIONavX(),
                         new ModuleIOSpark(0),
                         new ModuleIOSpark(1),
                         new ModuleIOSpark(2),
                         new ModuleIOSpark(3));
+        m_shooter = new Shooter(new ShooterIOSpark());
+        m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
                 vision = new Vision(
                         drive::addVisionMeasurement,
                         new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation));
-
                 break;
 
-            case SIM:
-                // Sim robot, instantiate physics sim IO implementations
-                drive = new Drive(
-                        new GyroIO() {},
-                        new ModuleIOSim(),
-                        new ModuleIOSim(),
-                        new ModuleIOSim(),
-                        new ModuleIOSim());
+      case SIM:
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim());
+        m_shooter = new Shooter(new ShooterIOSim());
+        m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSim());
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
+        break;
 
-                vision = new Vision(
-                        drive::addVisionMeasurement,
-                        new VisionIO() {});
-
-                break;
-
-            default:
-                // Replayed robot, disable IO implementations
-                drive = new Drive(
-                        new GyroIO() {},
-                        new ModuleIO() {},
-                        new ModuleIO() {},
-                        new ModuleIO() {},
-                        new ModuleIO() {});
-
-                vision = new Vision(
-                        drive::addVisionMeasurement,
-                        new VisionIO() {});
-                break;
-        }
+      default:
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
+        m_shooter = new Shooter(new ShooterIO() {});
+        m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIO() {});
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
+        break;
+    }
 
         // Set up auto routines
         autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -204,8 +577,37 @@ public class RobotContainer {
                 .leftTrigger(OIConstants.kTriggerButtonThreshold)
                 .whileTrue(m_intake.runExtakeCommand());
 
-        // Y Button -> Run intake and run the shooter flywheel and feeder
-        driveCtrlr.y().toggleOnTrue(m_shooter.runShooterCommand().alongWith(m_intake.runIntakeCommand()));
+    // Y Button -> Spin up flywheel, then run feeder + conveyor once at speed
+    driveCtrlr.y().toggleOnTrue(
+        m_shooter.runShooterCommand()
+            .alongWith(
+                Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                    .andThen(m_intake.runIntakeCommand())));
+
+    // D-pad snap to heading (field-relative)
+    driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(0)));
+
+    driveCtrlr.povRight().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(-90)));
+
+    driveCtrlr.povDown().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(180)));
+
+    driveCtrlr.povLeft().whileTrue(DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -driveCtrlr.getLeftY(),
+        () -> -driveCtrlr.getLeftX(),
+        () -> Rotation2d.fromDegrees(90)));
 
         drive.inAllianceZoneTrigger().onTrue(DriveCommands.setGoalTargetCommand());
     }

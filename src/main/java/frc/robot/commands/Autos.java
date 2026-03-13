@@ -20,9 +20,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.intake.Intake;
 
 public final class Autos {
 
@@ -75,7 +75,7 @@ public final class Autos {
    * a simple auto that shoots for 5 seconds.
    * it runs the shooter command and the new Conveyor command in parallel (i think).
    */
-  public static Command simpleAuto(ShooterSubsystem shooter, IntakeSubsystem intake) {
+  public static Command simpleAuto(Shooter shooter, Intake intake) {
     return Commands.parallel(
         // run the shooter sequence (Spin Up then activate Feeder (i think))
         shooter.runShooterCommand(),
