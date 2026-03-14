@@ -43,40 +43,40 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-        // The robot's subsystems and commands are defined here...
-        public Vision vision;
-        public Drive drive;
-        public Shooter m_shooter;
+    // The robot's subsystems and commands are defined here...
+    public Vision vision;
+    public Drive drive;
+    public Shooter m_shooter;
 
-        public Intake m_intake;
-        private static RobotContainer instance;
+          public Intake m_intake;
+          private static RobotContainer instance;
 
-        // The driver's controller
-        private final CommandXboxController driveCtrlr = new CommandXboxController(OIConstants.kDriverControllerPort);
+    // The driver's controller
+    private final CommandXboxController driveCtrlr = new CommandXboxController(OIConstants.kDriverControllerPort);
 
-        private final LoggedDashboardChooser<Command> autoChooser;
+    private final LoggedDashboardChooser<Command> autoChooser;
 
-        /**
-         * The container for the robot. Contains subsystems, OI devices, and commands.
-         */
-        public RobotContainer() {
+    /**
+     * The container for the robot. Contains subsystems, OI devices, and commands.
+     */
+    public RobotContainer() {
 
-                instance = this;
+        instance = this;
 
-                switch (Constants.currentMode) {
-                        case REAL:
-                                drive = new Drive(
-                                                new GyroIONavX(),
-                                                new ModuleIOSpark(0),
-                                                new ModuleIOSpark(1),
-                                                new ModuleIOSpark(2),
-                                                new ModuleIOSpark(3));
-                                m_shooter = new Shooter(new ShooterIOSpark());
-                                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
-                                vision = new Vision(
-                                                drive::addVisionMeasurement,
-                                                new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation));
-                                break;
+        switch (Constants.currentMode) {
+            case REAL:
+                drive = new Drive(
+                        new GyroIONavX(),
+                        new ModuleIOSpark(0),
+                        new ModuleIOSpark(1),
+                        new ModuleIOSpark(2),
+                        new ModuleIOSpark(3));
+                m_shooter = new Shooter(new ShooterIOSpark());
+                m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
+                vision = new Vision(
+                        drive::addVisionMeasurement,
+                        new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation));
+                break;
 
                         case SIM:
                                 drive = new Drive(
@@ -113,81 +113,92 @@ public class RobotContainer {
                                 break;
                 }
 
-                // Set up auto routines
-                autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+                    // Set up auto routines
+                    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
-                // Set up SysId routines
-                autoChooser.addOption(
-                                "Drive Wheel Radius Characterization",
+                    // Set up SysId routines
+                    autoChooser.addOption(
+                                        "Drive Wheel Radius Characterization",
                                 DriveCommands.wheelRadiusCharacterization(drive));
-                autoChooser.addOption(
-                                "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-                autoChooser.addOption(
-                                "Drive SysId (Quasistatic Forward)",
-                                drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Drive SysId (Quasistatic Reverse)",
-                                drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-                autoChooser.addOption(
-                                "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-                // Configure the trigger bindings
-                configureBindings();
-        }
+                    autoChooser.addOption(
+                                        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+                    autoChooser.addOption(
+                                        "Drive SysId (Quasistatic Forward)",
+                                        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                    autoChooser.addOption(
+                                        "Drive SysId (Quasistatic Reverse)",
+                                        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                    autoChooser.addOption(
+                                        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                    autoChooser.addOption(
+                                        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+                    // Configure the trigger bindings
+                    configureBindings();
+          }
 
-        /**
-         * Use this method to define your trigger->command mappings. Triggers can be
-         * created via the
-         * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
-         * an arbitrary
-         * predicate, or via the named factories in {@link
-         * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for
-         * {@link
-         * CommandXboxController
-         * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
-         * PS4} controllers or
-         * {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
-         * joysticks}.
-         */
-        private void configureBindings() {
-                // Default command, normal field-relative drive
-                drive.setDefaultCommand(
-                                DriveCommands.joystickDrive(
-                                                drive,
-                                                () -> -driveCtrlr.getLeftY(),
-                                                () -> -driveCtrlr.getLeftX(),
-                                                () -> -driveCtrlr.getRightX()));
+    /**
+     * Use this method to define your trigger->command mappings. Triggers can be
+     * created via the
+     * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
+     * an arbitrary
+     * predicate, or via the named factories in {@link
+     * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for
+     * {@link
+     * CommandXboxController
+     * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
+     * PS4} controllers or
+     * {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
+     * joysticks}.
+     */
+    private void configureBindings() {
+        // Default command, normal field-relative drive
+        drive.setDefaultCommand(
+                DriveCommands.joystickDriveAbsoluteAngle(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX(),
+                        () -> -driveCtrlr.getRightY(),
+                        () -> -driveCtrlr.getRightX()));
 
-                // Lock to 0° when A button is held
-                driveCtrlr
-                                .a()
-                                .whileTrue(
-                                                DriveCommands.joystickDriveAtAngle(
-                                                                drive,
-                                                                () -> -driveCtrlr.getLeftY(),
-                                                                () -> -driveCtrlr.getLeftX(),
-                                                                () -> Rotation2d.kZero));
+        // Lock to 0° Alliance Relative when A button is held
+        driveCtrlr
+                .a()
+                .whileTrue(
+                        DriveCommands.joystickDriveAtAngle(
+                                drive,
+                                () -> -driveCtrlr.getLeftY(),
+                                () -> -driveCtrlr.getLeftX(),
+                                () -> DriveCommands.isFlipped() ? Rotation2d.kZero
+                                        : Rotation2d.k180deg));
 
-                // Switch to X pattern when X button is pressed
-                driveCtrlr.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+        driveCtrlr.rightStick()
+                .whileTrue(DriveCommands.joystickDriveSnake(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX()));
 
-                // Two different ways to do the same thing:
+        // Switch to X pattern when X button is pressed
+        driveCtrlr.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-                // Reset gyro to 0° when B button is pressed
-                driveCtrlr
-                                .b()
-                                .onTrue(
-                                                Commands.runOnce(
-                                                                () -> drive.setPose(
-                                                                                new Pose2d(drive.getPose()
-                                                                                                .getTranslation(),
-                                                                                                Rotation2d.kZero)),
-                                                                drive)
-                                                                .ignoringDisable(true));
+        driveCtrlr.rightBumper()
+                .whileTrue(DriveCommands.joystickDriveAim(drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX()));
 
-                // Start Button -> Zero swerve heading
-                driveCtrlr.start().onTrue(drive.zeroHeadingCommand());
+        // Two different ways to do the same thing:
+
+        // Reset gyro to 0° when B button is pressed
+        driveCtrlr
+                .b()
+                .onTrue(
+                        Commands.runOnce(
+                                () -> drive.setPose(
+                                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                                drive)
+                                .ignoringDisable(true));
+
+        // Start Button -> Zero swerve heading
+        driveCtrlr.start().onTrue(drive.zeroHeadingCommand());
 
                 // TODO: extend/retract intake. Possibly as a function of the right trigger
                 // position?
@@ -238,18 +249,19 @@ public class RobotContainer {
                                 () -> -driveCtrlr.getLeftX(),
                                 () -> Rotation2d.fromDegrees(90)));
 
-        }
+        drive.inAllianceZoneTrigger().onTrue(DriveCommands.setGoalTargetCommand());
+    }
 
-        /**
-         * Use this to pass the autonomous command to the main {@link Robot} class.
-         *
-         * @return the command to run in autonomous
-         */
-        public Command getAutonomousCommand() {
-                return autoChooser.get();
-        }
+    /**
+     * Use this to pass the autonomous command to the main {@link Robot} class.
+     *
+     * @return the command to run in autonomous
+     */
+    public Command getAutonomousCommand() {
+        return autoChooser.get();
+    }
 
-        public static RobotContainer getInstance() {
-                return instance;
-        }
+    public static RobotContainer getInstance() {
+        return instance;
+    }
 }
