@@ -14,14 +14,14 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.math.filter.Debouncer;
 import frc.robot.Configs;
-import frc.robot.Constants.IntakeSubsystemConstants;
+import frc.robot.Constants.Intake;
 
 /** Hardware IO implementation for the intake using Spark Flex controllers. */
 public class IntakeIOSpark implements IntakeIO {
-  private final SparkFlex intakeMotor = new SparkFlex(IntakeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
-  private final SparkFlex conveyorMotor = new SparkFlex(IntakeSubsystemConstants.kConveyorMotorCanId, MotorType.kBrushless);
+  private final SparkFlex intakeMotor = new SparkFlex(Intake.kIntakeMotorCanId, MotorType.kBrushless);
+  private final SparkFlex conveyorMotor = new SparkFlex(Intake.kConveyorMotorCanId, MotorType.kBrushless);
 
-  private final SparkFlex pivotMotor = new SparkFlex(IntakeSubsystemConstants.kPivotMotorCanId, MotorType.kBrushless);
+  private final SparkFlex pivotMotor = new SparkFlex(Intake.kPivotMotorCanId, MotorType.kBrushless);
   private final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
   private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
 
@@ -59,23 +59,21 @@ public class IntakeIOSpark implements IntakeIO {
 
     // Conveyor
     sparkStickyFault = false;
-    ifOk(conveyorMotor, new DoubleSupplier[] { conveyorMotor::getAppliedOutput, conveyorMotor::getBusVoltage }, (values) -> {
-      inputs.conveyorAppliedVoltage = values[0] * values[1];
-    });
+    ifOk(conveyorMotor, new DoubleSupplier[] { conveyorMotor::getAppliedOutput, conveyorMotor::getBusVoltage },
+        (values) -> {
+          inputs.conveyorAppliedVoltage = values[0] * values[1];
+        });
     inputs.conveyorConnected = conveyorDebouncer.calculate(!sparkStickyFault);
 
     // Pivot
     sparkStickyFault = false;
     ifOk(pivotMotor, pivotEncoder::getPosition, (value) -> inputs.pivotPosition = value);
+    ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocity = value);
     ifOk(pivotMotor, new DoubleSupplier[] { pivotMotor::getAppliedOutput, pivotMotor::getBusVoltage }, (values) -> {
       inputs.pivotAppliedVoltage = values[0] * values[1];
     });
     ifOk(pivotMotor, pivotMotor::getOutputCurrent, (value) -> inputs.pivotCurrent = value);
-    try {
-      inputs.pivotTargetPosition = pivotController.getSetpoint();
-    } catch (Exception ignored) {
-      // controller may not be available
-    }
+    inputs.pivotTargetPosition = pivotController.getSetpoint();
     inputs.pivotConnected = pivotDebouncer.calculate(!sparkStickyFault);
   }
 
@@ -95,9 +93,14 @@ public class IntakeIOSpark implements IntakeIO {
   }
 
   @Override
+  public void zeroPivotPosition() {
+    pivotMotor.getEncoder().setPosition(0);
+  }
+
+  @Override
   public void stop() {
-    try { intakeMotor.stopMotor(); } catch (Exception ignored) {}
-    try { conveyorMotor.stopMotor(); } catch (Exception ignored) {}
-    try { pivotMotor.stopMotor(); } catch (Exception ignored) {}
+      intakeMotor.stopMotor();
+      conveyorMotor.stopMotor();
+      pivotMotor.stopMotor();
   }
 }

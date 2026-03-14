@@ -17,7 +17,7 @@ public class IntakeCommandsTest {
    */
   private void runCommandAndAssertPosition(Intake intake, IntakeIOSim simIO, double expectedDegrees)
       throws Exception {
-    var cmd = (expectedDegrees == Constants.IntakeSubsystemConstants.PivotSetpoints.kDeployedDegrees)
+    var cmd = (expectedDegrees == Constants.Intake.PivotSetpoints.kDeployedDegrees)
         ? intake.deployIntakeCommand()
         : intake.retractIntakeCommand();
 
@@ -59,9 +59,9 @@ public class IntakeCommandsTest {
     Intake intake = new Intake(simIO);
 
     // First ensure retract moves to retracted position
-    runCommandAndAssertPosition(intake, simIO, Constants.IntakeSubsystemConstants.PivotSetpoints.kRetractedDegrees);
+    runCommandAndAssertPosition(intake, simIO, Constants.Intake.PivotSetpoints.kRetractedDegrees);
 
     // Then ensure deploy moves to deployed position
-    runCommandAndAssertPosition(intake, simIO, Constants.IntakeSubsystemConstants.PivotSetpoints.kDeployedDegrees);
+    runCommandAndAssertPosition(intake, simIO, Constants.Intake.PivotSetpoints.kDeployedDegrees);
   }
 }

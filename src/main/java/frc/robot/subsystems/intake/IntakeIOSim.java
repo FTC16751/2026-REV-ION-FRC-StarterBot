@@ -1,15 +1,22 @@
 package frc.robot.subsystems.intake;
 
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkFlexSim;
+import com.revrobotics.sim.SparkRelativeEncoderSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkFlex;
 
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-
-import frc.robot.Constants.IntakeSubsystemConstants;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import frc.robot.Configs;
+import frc.robot.Constants;
+import frc.robot.Constants.Intake;
 
 /**
  * Simulation IO for the Intake using SparkFlexSim and a SingleJointedArmSim for
@@ -17,94 +24,125 @@ import frc.robot.Constants.IntakeSubsystemConstants;
  */
 public class IntakeIOSim implements IntakeIO {
   // Motors
-  private final SparkFlex intakeSpark = new SparkFlex(IntakeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
-  private final SparkFlex conveyorSpark = new SparkFlex(IntakeSubsystemConstants.kConveyorMotorCanId,
+  private final SparkFlex intakeSpark = new SparkFlex(Intake.kIntakeMotorCanId, MotorType.kBrushless);
+  private final SparkFlex conveyorSpark = new SparkFlex(Intake.kConveyorMotorCanId,
       MotorType.kBrushless);
-  private final SparkFlex pivotSpark = new SparkFlex(IntakeSubsystemConstants.kPivotMotorCanId, MotorType.kBrushless);
+  private final SparkFlex pivotMotor = new SparkFlex(Intake.kPivotMotorCanId, MotorType.kBrushless);
 
   private final SparkFlexSim intakeSim = new SparkFlexSim(intakeSpark, DCMotor.getNeoVortex(1));
   private final SparkFlexSim conveyorSim = new SparkFlexSim(conveyorSpark, DCMotor.getNeoVortex(1));
-  private final SparkFlexSim pivotSim = new SparkFlexSim(pivotSpark, DCMotor.getNeoVortex(1));
+  private final SparkFlexSim pivotSim = new SparkFlexSim(pivotMotor, DCMotor.getNeoVortex(1));
+
+  // Simple flywheel sims for intake and conveyor so the motors show
+  // output/current
+  private static final double FLYWHEEL_MOI = 0.001; // kg*m^2 as requested
+  private static final double FLYWHEEL_GEARING = 1.0;
+  private final FlywheelSim intakeFlywheelSim = new FlywheelSim(
+      LinearSystemId.createFlywheelSystem(DCMotor.getNeoVortex(1), FLYWHEEL_MOI, FLYWHEEL_GEARING),
+      DCMotor.getNeoVortex(1));
+  private final FlywheelSim conveyorFlywheelSim = new FlywheelSim(
+      LinearSystemId.createFlywheelSystem(DCMotor.getNeoVortex(1), FLYWHEEL_MOI, FLYWHEEL_GEARING),
+      DCMotor.getNeoVortex(1));
 
   // The authoritative arm sim using WPILib's SingleJointedArmSim
   private final SingleJointedArmSim armSim;
 
   private double lastTime = Timer.getFPGATimestamp();
+  private SparkRelativeEncoderSim pivotEncoder = pivotSim.getRelativeEncoderSim();
 
   public IntakeIOSim() {
     // Use WPILib's SingleJointedArmSim constructor that takes (DCMotor, gearing,
     // jKgMetersSquared,
     // armLengthMeters, minAngleRads, maxAngleRads, simulateGravity,
     // startingAngleRads)
-    double moi = SingleJointedArmSim.estimateMOI(IntakeSubsystemConstants.ARM_LENGTH_METERS,
-        IntakeSubsystemConstants.ARM_MASS_KG);
+    double moi = SingleJointedArmSim.estimateMOI(Intake.ARM_LENGTH_METERS,
+        Intake.ARM_MASS_KG);
     // Limit pivot between 0 deg (retracted) and 90 deg (deployed)
     double minAngle = 0.0;
     double maxAngle = Math.PI / 2.0;
     armSim = new SingleJointedArmSim(
         DCMotor.getNeoVortex(1),
-        IntakeSubsystemConstants.GEARING,
+        Intake.GEARING,
         moi,
-        IntakeSubsystemConstants.ARM_LENGTH_METERS,
+        Intake.ARM_LENGTH_METERS,
         minAngle,
         maxAngle,
         true,
         0.0);
+
+    // Configure simulated Spark controllers with the team Configs so closed-loop
+    // controllers and encoder conversions match real robot settings.
+    intakeSpark.configure(
+        Configs.IntakeSubsystem.intakeConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    conveyorSpark.configure(
+        Configs.IntakeSubsystem.conveyorConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    pivotMotor.configure(
+        Configs.IntakeSubsystem.pivotConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    pivotEncoder.setPosition(Constants.Intake.PivotSetpoints.kRetractedDegrees);
   }
 
   @Override
   public void updateInputs(IntakeIO.IntakeIOInputs inputs) {
+    // calc dt
     double now = Timer.getFPGATimestamp();
     double dt = Math.max(0.0, now - lastTime);
     lastTime = now;
 
-    double battery = RobotController.getBatteryVoltage();
+    double iterateBattery = RoboRioSim.getVInVoltage();
 
-    // First, iterate intake & conveyor sims so controllers update their internal state
-    intakeSim.iterate(now, dt, battery);
-    conveyorSim.iterate(now, dt, battery);
+    // Read applied outputs (from previous controller step) and drive physics models
+    intakeFlywheelSim.setInputVoltage(intakeSpark.getAppliedOutput() * iterateBattery);
+    intakeFlywheelSim.update(dt);
+    double intakeRotorRadPerSec = intakeFlywheelSim.getAngularVelocityRadPerSec();
 
-    // Drive arm sim with motor applied voltage from the last spark sim iteration
-    double appliedVoltsPrev = pivotSpark.getAppliedOutput() * battery;
-    armSim.setInputVoltage(appliedVoltsPrev);
+    conveyorFlywheelSim.setInputVoltage(conveyorSpark.getAppliedOutput() * iterateBattery);
+    conveyorFlywheelSim.update(dt);
+    double conveyorRotorRadPerSec = conveyorFlywheelSim.getAngularVelocityRadPerSec();
+
+    // Drive arm sim with motor applied voltage from the last controller step
+    armSim.setInputVoltage(pivotMotor.getAppliedOutput() * iterateBattery);
     armSim.update(dt);
-    double angleRad = armSim.getAngleRads();
-    double angleDeg = Math.toDegrees(angleRad);
+    double angleDeg = Math.toDegrees(armSim.getAngleRads());
 
-    // Publish the measured encoder position/velocity to the Spark sim BEFORE
-    // iterating the pivot Spark sim so the closed-loop controller sees the
-    // current plant state when it computes outputs for this timestep.
-    var encSim = pivotSim.getExternalEncoderSim();
-    // The Spark encoder is configured to report degrees (Configs sets
-    // positionConversionFactor accordingly)
-    encSim.setPosition(angleDeg);
-    // Convert arm sim velocity (rad/s) to degrees/sec for the encoder sim
-    encSim.setVelocity(Math.toDegrees(armSim.getVelocityRadPerSec()));
+    // Push simulated encoder state into the Spark encoder sims
+    // FlywheelSim returns rad/s for rotor velocity
+    intakeSim.getRelativeEncoderSim().setVelocity(intakeRotorRadPerSec);
+    conveyorSim.getRelativeEncoderSim().setVelocity(conveyorRotorRadPerSec);
 
-    // Now iterate pivot sim so its closed-loop controller reads the encoder we
-    // just wrote and computes an output for this timestep.
-    pivotSim.iterate(now, dt, battery);
+    // The Spark encoder for pivot is configured to report degrees
+    pivotEncoder.setPosition(angleDeg);
+    pivotEncoder.setVelocity(Math.toDegrees(armSim.getVelocityRadPerSec()));
 
-    // Read applied voltage/current from the Spark
-    inputs.intakeAppliedVoltage = intakeSpark.getAppliedOutput() * battery;
-    inputs.conveyorAppliedVoltage = conveyorSpark.getAppliedOutput() * battery;
+    // Now iterate the Spark sims so their controllers read the encoder state we
+    // just wrote and compute outputs for this timestep. Pass the simulated
+    // rotor/encoder velocities for each motor.
+    intakeSim.iterate(intakeRotorRadPerSec, iterateBattery, dt);
+    conveyorSim.iterate(conveyorRotorRadPerSec, iterateBattery, dt);
+    pivotSim.iterate(Math.toDegrees(armSim.getVelocityRadPerSec()), iterateBattery, dt);
 
-    double appliedVolts = pivotSpark.getAppliedOutput() * battery;
+    // Read applied current from sims and update battery loaded voltage
+    RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(armSim.getCurrentDrawAmps(),
+        Math.abs(intakeFlywheelSim.getCurrentDrawAmps()), Math.abs(conveyorFlywheelSim.getCurrentDrawAmps())));
 
-    // Publish pivot state
+    // Publish inputs (use the iterateBattery-driven applied voltages we computed)
+    inputs.intakeAppliedVoltage = intakeSpark.getAppliedOutput() * iterateBattery;
+    inputs.conveyorAppliedVoltage = conveyorSpark.getAppliedOutput() * iterateBattery;
     inputs.pivotPosition = angleDeg;
-    inputs.pivotAppliedVoltage = appliedVolts;
+    inputs.pivotVelocity = pivotSim.getVelocity();
+    inputs.pivotAppliedVoltage = pivotMotor.getAppliedOutput() * iterateBattery;
     inputs.pivotCurrent = Math.abs(armSim.getCurrentDrawAmps());
-    try {
-      inputs.pivotTargetPosition = pivotSpark.getClosedLoopController().getSetpoint();
-    } catch (Exception e) {
-      inputs.pivotTargetPosition = 0.0;
-    }
+    inputs.pivotTargetPosition = pivotMotor.getClosedLoopController().getSetpoint();
   }
 
   @Override
   public void setPivotPosition(double degrees) {
-      pivotSpark.getClosedLoopController().setSetpoint(degrees, com.revrobotics.spark.SparkBase.ControlType.kPosition);
+    pivotMotor.getClosedLoopController().setSetpoint(degrees, com.revrobotics.spark.SparkBase.ControlType.kPosition);
 
   }
 
@@ -119,9 +157,14 @@ public class IntakeIOSim implements IntakeIO {
   }
 
   @Override
+  public void zeroPivotPosition(){
+    pivotMotor.getEncoder().setPosition(0);
+  }
+
+  @Override
   public void stop() {
-      intakeSpark.stopMotor();
-      conveyorSpark.stopMotor();
-      pivotSpark.stopMotor();
+    intakeSpark.stopMotor();
+    conveyorSpark.stopMotor();
+    pivotMotor.stopMotor();
   }
 }

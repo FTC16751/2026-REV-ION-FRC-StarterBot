@@ -16,6 +16,7 @@ public interface IntakeIO {
 
     // Pivot
     public double pivotPosition = 0.0; // degrees
+    public double pivotVelocity = 0.0; // degrees / sec 
     public double pivotAppliedVoltage = 0.0;
     public double pivotCurrent = 0.0;
     public double pivotTargetPosition = 0.0;
@@ -33,6 +34,8 @@ public interface IntakeIO {
 
   /** Set pivot position in degrees (closed-loop in hardware). */
   public default void setPivotPosition(double degrees) {}
+
+  public default void zeroPivotPosition() {}
 
   /** Stop all outputs. */
   public default void stop() {}

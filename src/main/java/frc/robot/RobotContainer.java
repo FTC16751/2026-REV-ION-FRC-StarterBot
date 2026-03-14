@@ -152,21 +152,21 @@ public class RobotContainer {
     private void configureBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(
-            DriveCommands.joystickDrive(
-                drive,
-                () -> -driveCtrlr.getLeftY(),
-                () -> -driveCtrlr.getLeftX(),
-                () -> -driveCtrlr.getRightX()));
+                DriveCommands.joystickDrive(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX(),
+                        () -> -driveCtrlr.getRightX()));
 
         // Lock to 0° when A button is held
         driveCtrlr
-            .a()
-            .whileTrue(
-                DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> -driveCtrlr.getLeftY(),
-                    () -> -driveCtrlr.getLeftX(),
-                    () -> Rotation2d.kZero));
+                .a()
+                .whileTrue(
+                        DriveCommands.joystickDriveAtAngle(
+                                drive,
+                                () -> -driveCtrlr.getLeftY(),
+                                () -> -driveCtrlr.getLeftX(),
+                                () -> Rotation2d.kZero));
 
         // Switch to X pattern when X button is pressed
         driveCtrlr.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -175,13 +175,13 @@ public class RobotContainer {
 
         // Reset gyro to 0° when B button is pressed
         driveCtrlr
-            .b()
-            .onTrue(
-                Commands.runOnce(
-                    () -> drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
-                .ignoringDisable(true));
+                .b()
+                .onTrue(
+                        Commands.runOnce(
+                                () -> drive.setPose(
+                                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                                drive)
+                                .ignoringDisable(true));
 
         // Start Button -> Zero swerve heading
         driveCtrlr.start().onTrue(drive.zeroHeadingCommand());
@@ -190,13 +190,13 @@ public class RobotContainer {
         // position?
         // Right Trigger -> Run fuel intake in reverse
         driveCtrlr
-            .rightTrigger(OIConstants.kTriggerButtonThreshold)
-            .whileTrue(m_intake.runIntakeCommand());
+                .rightTrigger(OIConstants.kTriggerButtonThreshold)
+                .whileTrue(m_intake.runIntakeCommand());
 
-        // Left Bumper -> Run fuel intake in
+        // Left trigger all the way -> Run fuel intake in
         driveCtrlr
-            .leftBumper()
-            .whileTrue(m_intake.runIntakeCommand());
+                .leftTrigger(1 - OIConstants.kTriggerButtonThreshold)
+                .whileTrue(m_intake.runIntakeCommand());
 
         // Left Trigger -> set arm position
         driveCtrlr.leftTrigger(OIConstants.kTriggerButtonThreshold)
@@ -205,35 +205,35 @@ public class RobotContainer {
 
         // Y Button -> Spin up flywheel, then run feeder + conveyor once at speed
         driveCtrlr.y().toggleOnTrue(
-            m_shooter.runShooterCommand()
-                .alongWith(
-                    Commands.waitUntil(m_shooter.isFlywheelSpinning)
-                        .andThen(m_intake.runIntakeCommand())));
+                m_shooter.runShooterCommand()
+                        .alongWith(
+                                Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                                        .andThen(m_intake.runIntakeCommand())));
 
         // D-pad snap to heading (field-relative)
         driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
-            drive,
-            () -> -driveCtrlr.getLeftY(),
-            () -> -driveCtrlr.getLeftX(),
-            () -> Rotation2d.fromDegrees(0)));
+                drive,
+                () -> -driveCtrlr.getLeftY(),
+                () -> -driveCtrlr.getLeftX(),
+                () -> Rotation2d.fromDegrees(0)));
 
         driveCtrlr.povRight().whileTrue(DriveCommands.joystickDriveAtAngle(
-            drive,
-            () -> -driveCtrlr.getLeftY(),
-            () -> -driveCtrlr.getLeftX(),
-            () -> Rotation2d.fromDegrees(-90)));
+                drive,
+                () -> -driveCtrlr.getLeftY(),
+                () -> -driveCtrlr.getLeftX(),
+                () -> Rotation2d.fromDegrees(-90)));
 
         driveCtrlr.povDown().whileTrue(DriveCommands.joystickDriveAtAngle(
-            drive,
-            () -> -driveCtrlr.getLeftY(),
-            () -> -driveCtrlr.getLeftX(),
-            () -> Rotation2d.fromDegrees(180)));
+                drive,
+                () -> -driveCtrlr.getLeftY(),
+                () -> -driveCtrlr.getLeftX(),
+                () -> Rotation2d.fromDegrees(180)));
 
         driveCtrlr.povLeft().whileTrue(DriveCommands.joystickDriveAtAngle(
-            drive,
-            () -> -driveCtrlr.getLeftY(),
-            () -> -driveCtrlr.getLeftX(),
-            () -> Rotation2d.fromDegrees(90)));
+                drive,
+                () -> -driveCtrlr.getLeftY(),
+                () -> -driveCtrlr.getLeftX(),
+                () -> Rotation2d.fromDegrees(90)));
 
     }
 
