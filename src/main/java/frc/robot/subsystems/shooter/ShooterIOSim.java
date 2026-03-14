@@ -8,6 +8,8 @@ import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -53,7 +55,18 @@ public class ShooterIOSim implements ShooterIO {
         private double lastTime = Timer.getFPGATimestamp();
 
         public ShooterIOSim() {
-                // No additional startup actions required for the SparkFlexSim instances here.
+                flywheelSpark.configure(
+                                frc.robot.Configs.ShooterSubsystem.flywheelConfig,
+                                ResetMode.kResetSafeParameters,
+                                PersistMode.kPersistParameters);
+                flywheelFollowerSpark.configure(
+                                frc.robot.Configs.ShooterSubsystem.flywheelFollowerConfig,
+                                ResetMode.kResetSafeParameters,
+                                PersistMode.kPersistParameters);
+                feederSpark.configure(
+                                frc.robot.Configs.ShooterSubsystem.feederConfig,
+                                ResetMode.kResetSafeParameters,
+                                PersistMode.kPersistParameters);
         }
 
         @Override
@@ -69,18 +82,17 @@ public class ShooterIOSim implements ShooterIO {
                 double appliedVolts = flywheelSpark.getAppliedOutput() * iterateBattery;
                 flywheelSim.setInputVoltage(appliedVolts);
                 flywheelSim.update(dt);
-                double rotorRadPerSec = flywheelSim.getAngularVelocityRadPerSec();
+                double rotorRPM = flywheelSim.getAngularVelocityRPM();
 
                 // Push the simulated encoder state into the Spark sim so controllers read
                 // the current plant state.
-                var encSim = flywheelSparkSim.getRelativeEncoderSim();
-                encSim.setVelocity(rotorRadPerSec);
+                flywheelSparkSim.getRelativeEncoderSim().setVelocity(rotorRPM);
 
                 // Now iterate the Spark sims so their controllers read the encoder state we
                 // just wrote and compute outputs for this timestep. Pass the rotor
                 // velocity to the Spark sim iterate call so it can use it internally.
-                flywheelSparkSim.iterate(rotorRadPerSec, iterateBattery, dt);
-                flywheelFollowerSparkSim.iterate(rotorRadPerSec, iterateBattery, dt);
+                flywheelSparkSim.iterate(rotorRPM, iterateBattery, dt);
+                flywheelFollowerSparkSim.iterate(rotorRPM, iterateBattery, dt);
                 feederSparkSim.iterate(0.0, iterateBattery, dt);
 
                 // Read applied current from sims and update battery loaded voltage
@@ -89,14 +101,12 @@ public class ShooterIOSim implements ShooterIO {
 
                 // Fill inputs from physics (use rotor state from flywheelSim and applied
                 // voltage computed earlier)
-                double rotorRpm = rotorRadPerSec * 60.0 / (2.0 * Math.PI);
-                inputs.flywheelVelocity = rotorRpm;
+                inputs.flywheelVelocity = rotorRPM;
                 inputs.flywheelAppliedVoltage = appliedVolts;
                 inputs.flywheelTargetVelocity = flywheelCLC.getSetpoint();
                 inputs.flywheelCurrent = Math.abs(flywheelSim.getCurrentDrawAmps());
                 inputs.flyFollowerAppliedVoltage = flywheelSpark.getAppliedOutput() * iterateBattery;
 
-                // Feeder (read from SparkFlex if available)
                 inputs.feederAppliedVoltage = feederSpark.getAppliedOutput() * iterateBattery;
                 inputs.feederCurrent = feederSpark.getOutputCurrent();
         }
