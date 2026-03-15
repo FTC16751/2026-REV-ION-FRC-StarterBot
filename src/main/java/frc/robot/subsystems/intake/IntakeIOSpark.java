@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.RPM;
 import static frc.robot.util.SparkUtil.*;
 
 import java.util.function.DoubleSupplier;
@@ -13,6 +14,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Configs;
 import frc.robot.Constants.Intake;
 
@@ -80,6 +82,12 @@ public class IntakeIOSpark implements IntakeIO {
   @Override
   public void setIntakePower(double power) {
     intakeMotor.set(power);
+  }
+
+
+  @Override
+  public void setIntakeSpeed(AngularVelocity speed) {
+    intakeMotor.getClosedLoopController().setSetpoint(speed.in(RPM), ControlType.kVelocity);
   }
 
   @Override

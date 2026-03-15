@@ -1,14 +1,18 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.sim.SparkRelativeEncoderSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkBase.ControlType;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -149,6 +153,13 @@ public class IntakeIOSim implements IntakeIO {
   @Override
   public void setIntakePower(double power) {
     intakeSpark.set(power);
+  }
+
+  
+
+  @Override
+  public void setIntakeSpeed(AngularVelocity speed) {
+    intakeSpark.getClosedLoopController().setSetpoint(speed.in(RPM), ControlType.kVelocity);
   }
 
   @Override

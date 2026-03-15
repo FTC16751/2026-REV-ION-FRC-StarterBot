@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 
@@ -13,6 +15,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -51,6 +54,8 @@ public final class Constants {
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.6;
       public static final double kExtake = -0.6;
+      public static final AngularVelocity kIntakeSpeed = RPM.of(3000);
+      public static final AngularVelocity kExtakeSpeed = RPM.of(-3000);
     }
 
     public static final class ConveyorSetpoints {

@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.DoubleSupplier;
 
@@ -12,6 +13,8 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.units.AngularVelocityUnit;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -47,6 +50,9 @@ public class Intake extends SubsystemBase {
   private void setIntakePower(double power) {
     io.setIntakePower(MathUtil.clamp(power, -1.0, 1.0));
   }
+  private void setIntakeSpeed(AngularVelocity speed) {
+    io.setIntakeSpeed(speed);
+  }
 
   private void setConveyorPower(double power) {
     io.setConveyorPower(MathUtil.clamp(power, -1.0, 1.0));
@@ -63,11 +69,11 @@ public class Intake extends SubsystemBase {
   public Command runIntakeCommand() {
     return this.startEnd(
         () -> {
-          this.setIntakePower(IntakeSetpoints.kIntake);
+          this.setIntakeSpeed(IntakeSetpoints.kIntakeSpeed);
           this.setConveyorPower(ConveyorSetpoints.kIntake);
         },
         () -> {
-          this.setIntakePower(0.0);
+          this.setIntakeSpeed(RPM.zero());
           this.setConveyorPower(0.0);
         }).withName("Intaking");
   }
@@ -75,11 +81,11 @@ public class Intake extends SubsystemBase {
   public Command runExtakeCommand() {
     return this.startEnd(
         () -> {
-          this.setIntakePower(IntakeSetpoints.kExtake);
+          this.setIntakeSpeed(IntakeSetpoints.kExtakeSpeed);
           this.setConveyorPower(ConveyorSetpoints.kExtake);
         },
         () -> {
-          this.setIntakePower(0.0);
+          this.setIntakeSpeed(RPM.zero());
           this.setConveyorPower(0.0);
         }).withName("Extaking");
   }

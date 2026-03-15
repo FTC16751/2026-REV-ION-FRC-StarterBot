@@ -87,7 +87,12 @@ public final class Configs {
         .inverted(false)
         .idleMode(IdleMode.kCoast)
         .openLoopRampRate(0.5)
-        .smartCurrentLimit(40);
+        .smartCurrentLimit(40)
+        .closedLoop              
+          .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+          .pid(0.001, 0, 0) //TODO : Tune this!
+          .outputRange(-0.5, 0.5) // Safety for testing. Tune this!
+          .feedForward.kV(1.0 / Constants.NeoMotorConstants.kVortexKv);
 
       // Configure basic settings of the conveyor motor
       conveyorConfig

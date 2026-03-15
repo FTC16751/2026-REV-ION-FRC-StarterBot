@@ -2,6 +2,8 @@ package frc.robot.subsystems.intake;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import edu.wpi.first.units.measure.AngularVelocity;
+
 /** IO interface for the Intake so we can plug in a hardware implementation or a sim implementation */
 public interface IntakeIO {
   @AutoLog
@@ -28,6 +30,8 @@ public interface IntakeIO {
 
   /** Set intake motor output in [-1,1]. */
   public default void setIntakePower(double power) {}
+  
+  public default void setIntakeSpeed(AngularVelocity speed) {}
 
   /** Set conveyor motor output in [-1,1]. */
   public default void setConveyorPower(double power) {}
