@@ -85,6 +85,13 @@ public class Intake extends SubsystemBase {
         }).withName("Intaking");
   }
 
+  public Command runIntakeOnlyCommand() {
+    return this.startEnd(
+        () -> this.setIntakePower(IntakeSetpoints.kIntake),
+        () -> this.setIntakePower(0.0)
+    ).withName("Intaking (no conveyor)");
+  }
+
   public Command runExtakeCommand() {
     return this.startEnd(
         () -> {
