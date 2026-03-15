@@ -168,8 +168,8 @@ public class IntakeIOSim implements IntakeIO {
   }
 
   @Override
-  public void zeroPivotPosition(){
-    pivotMotor.getEncoder().setPosition(0);
+  public void zeroPivotPosition(boolean bottom){
+    pivotMotor.getEncoder().setPosition(bottom ? Constants.Intake.PivotSetpoints.kDeployedDegrees : Constants.Intake.PivotSetpoints.kRetractedDegrees);
   }
 
   @Override

@@ -104,7 +104,8 @@ public final class Configs {
       // Configure settings for the intake pivot motor 
       pivotConfig
         .idleMode(IdleMode.kBrake) // Brake mode to hold position
-        .smartCurrentLimit(40);
+        .smartCurrentLimit(40)
+        .inverted(true); // positive needs to bring it up.
       
       /*  
       *   TODO: 
@@ -125,7 +126,9 @@ public final class Configs {
       pivotConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .pid(0.05, 0, 0) //Tune this!
-        .outputRange(-0.5, 0.5); // Safety for testing. Tune this!
+        .outputRange(-0.5, 0.5)// Safety for testing. Tune this!
+        .feedForward
+        .scr(0, 0.63, 1/pivotPositionFactor); //TODO: tune kCos. Estimate from recalc
     }
   }
 

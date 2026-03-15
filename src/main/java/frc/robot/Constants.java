@@ -64,8 +64,7 @@ public final class Constants {
     }
 
     public static final class PivotSetpoints {
-      // TODO: check these if they need to be reversed?
-      public static final double kRetractedDegrees = 90.0; // Vertical / Stowed
+      public static final double kRetractedDegrees = 115.0; // Vertical / Stowed
       public static final double kDeployedDegrees = 0.0; // Horizontal / Intake position
     }
 

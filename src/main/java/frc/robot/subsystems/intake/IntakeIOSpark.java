@@ -16,6 +16,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Configs;
+import frc.robot.Constants;
 import frc.robot.Constants.Intake;
 
 /** Hardware IO implementation for the intake using Spark Flex controllers. */
@@ -101,8 +102,8 @@ public class IntakeIOSpark implements IntakeIO {
   }
 
   @Override
-  public void zeroPivotPosition() {
-    pivotMotor.getEncoder().setPosition(0);
+  public void zeroPivotPosition(boolean bottom) {
+    pivotMotor.getEncoder().setPosition(bottom ? Constants.Intake.PivotSetpoints.kDeployedDegrees : Constants.Intake.PivotSetpoints.kRetractedDegrees);
   }
 
   @Override

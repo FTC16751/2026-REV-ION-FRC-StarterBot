@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -13,7 +14,6 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.Interpolator;
-import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -39,7 +39,9 @@ public class Intake extends SubsystemBase {
         Degrees.of(Constants.Intake.PivotSetpoints.kRetractedDegrees));
     mechanism.getRoot("IntakeBase", Inches.of(20).in(Meters), Inches.of(0).in(Meters)).append(armLig);
     System.out.println("---> Intake initialized (IO based)");
-    slamBottom().debounce(1).onTrue(runOnce(this::zeroPivotPosition));
+    slamBottom().debounce(1).onTrue(runOnce(this::zeroPivotPosition).withName("Slammed into Bottom Stop"));
+    slamTop().debounce(1).onTrue(runOnce(this::maxPivotPosition).withName("Slammed into Top Stop"));
+  
   }
 
   /** Convenience constructor: constructs a hardware IO implementation. */
@@ -47,6 +49,8 @@ public class Intake extends SubsystemBase {
     this(new IntakeIOSpark());
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   private void setIntakePower(double power) {
     io.setIntakePower(MathUtil.clamp(power, -1.0, 1.0));
   }
@@ -63,7 +67,10 @@ public class Intake extends SubsystemBase {
   }
 
   private void zeroPivotPosition() {
-    io.zeroPivotPosition();
+    io.zeroPivotPosition(true);
+  }
+  private void maxPivotPosition() {
+    io.zeroPivotPosition(false);
   }
 
   public Command runIntakeCommand() {
@@ -114,8 +121,15 @@ public class Intake extends SubsystemBase {
     return this.runOnce(() -> setPivotPosition(angle)).withName("Deploy Intake");
   }
 
+  BooleanSupplier excessCurrent = () -> Math.abs( inputs.pivotCurrent) > 20; // should not take more than half the current limit.
+  BooleanSupplier zeroVelocity = () -> inputs.pivotVelocity < 1e-4; // low velocity means it's stopped  
+    BooleanSupplier negativeOutput = () -> inputs.pivotAppliedVoltage < 0; // negative applied voltage means it's trying to move towards deployed;
+    BooleanSupplier positiveOutput = () -> inputs.pivotAppliedVoltage > 0; // negative applied voltage means it's trying to move towards retracted;
   public Trigger slamBottom() {
-    return new Trigger(() -> (inputs.pivotCurrent > 20) && (inputs.pivotVelocity < 1e-6));
+    return new Trigger(excessCurrent).and(negativeOutput).and(zeroVelocity);
+  }
+  public Trigger slamTop() {
+    return new Trigger(excessCurrent).and(positiveOutput).and(zeroVelocity);
   }
 
   @Override

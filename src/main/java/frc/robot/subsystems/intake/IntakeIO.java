@@ -39,7 +39,7 @@ public interface IntakeIO {
   /** Set pivot position in degrees (closed-loop in hardware). */
   public default void setPivotPosition(double degrees) {}
 
-  public default void zeroPivotPosition() {}
+  public default void zeroPivotPosition(boolean bottom) {}
 
   /** Stop all outputs. */
   public default void stop() {}
