@@ -1,6 +1,8 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Radian;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -63,7 +65,7 @@ public class IntakeIOSim implements IntakeIO {
         Intake.ARM_MASS_KG);
     // Limit pivot between 0 deg (retracted) and 90 deg (deployed)
     double minAngle = 0.0;
-    double maxAngle = Math.PI / 2.0;
+    double maxAngle = Radian.convertFrom(Constants.Intake.PivotSetpoints.kRetractedDegrees,Degrees);
     armSim = new SingleJointedArmSim(
         DCMotor.getNeoVortex(1),
         Intake.GEARING,
@@ -72,7 +74,7 @@ public class IntakeIOSim implements IntakeIO {
         minAngle,
         maxAngle,
         true,
-        0.0);
+        maxAngle);
 
     // Configure simulated Spark controllers with the team Configs so closed-loop
     // controllers and encoder conversions match real robot settings.

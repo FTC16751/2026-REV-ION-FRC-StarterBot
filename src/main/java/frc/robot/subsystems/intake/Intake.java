@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.RPM;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -30,6 +31,7 @@ import frc.robot.Constants.Intake.PivotSetpoints;
 public class Intake extends SubsystemBase {
   private final IntakeIO io;
   private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+  @AutoLogOutput
   private LoggedMechanism2d mechanism = new LoggedMechanism2d(3, 3);
   private LoggedMechanismLigament2d armLig;
 
@@ -143,6 +145,7 @@ public class Intake extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     armLig.setAngle(Degrees.of(inputs.pivotPosition));
+    // Logger.recordOutput("Intake", mechanism);
     Logger.processInputs("Intake", inputs);
   }
 

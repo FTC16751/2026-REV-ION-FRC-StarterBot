@@ -383,7 +383,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Distance distanceToTarget() {
-    return Meters.of(translationToTarget().getDistance(Translation2d.kZero));
+    return Meters.of(translationToTarget().getNorm());
   }
 
   /**
