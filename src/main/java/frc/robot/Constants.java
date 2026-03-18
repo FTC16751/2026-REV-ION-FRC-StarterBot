@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 
@@ -45,6 +47,7 @@ public final class Constants {
 
   public static final class Intake {
     public static final int kIntakeMotorCanId = 31; // SPARK Flex CAN ID
+    public static final int kIntakeFollowerMotorCanId = 32; // SPARK Flex CAN ID (follower)
     public static final int kPivotMotorCanId = 30; // SPARK Flex CAN ID (New Pivot Motor)
     public static final int kConveyorMotorCanId = 23; // SPARK Flex CAN ID
 
@@ -54,14 +57,28 @@ public final class Constants {
     }
 
     public static final class ConveyorSetpoints {
-      public static final double kIntake = 0.7;
+      public static final double kIntake = 1.0;
       public static final double kExtake = -0.7;
     }
 
     public static final class PivotSetpoints {
-      // TODO: check these if they need to be reversed?
-      public static final double kRetractedDegrees = 90.0; // Vertical / Stowed
-      public static final double kDeployedDegrees = 0.0; // Horizontal / Intake position
+      public static final double kZeroOffset = 0.0; // Adjust this if you need to zero the absolute encoder externally
+      public static final double kRetractedPosition = .0;//0.487;
+      public static final double kDeployedPosition =0.317;// 0.82;
+      // Cosine feedforward: duty cycle needed to hold arm horizontal (max gravity).
+      // Tune: set P=0, slowly increase until arm holds at deployed position without drifting.
+      public static final double kCos = 0.75;
+      // Stall detection: snap target to actual position if motor fights this long
+      public static final double kStallCurrentAmps = 25.0;
+      public static final double kPositionTolerance = 0.02; // rotations — min error to consider "still fighting"
+      // Compliant hold latch activation tolerance — larger than kPositionTolerance so the arm
+      // doesn't need to land exactly on target to enter compliant mode.
+      public static final double kCompliantHoldTolerance = 0.05;
+      // Nudge: rotations added to pivotTarget per 20ms cycle while button held (~0.25 rot/sec)
+      public static final double kNudgePerCycle = 0.005;
+      // true  = Option 1: open-loop (kCos only) once arm reaches deployed target — compliant to jams
+      // false = original: always closed-loop position control
+      public static final boolean kUseCompliantHold = true;
     }
 
     // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
@@ -125,21 +142,21 @@ public final class Constants {
     public static final boolean kRearRightTurningMotorOnBottom = true;
 
     // SPARK MAX CAN IDs
-    public static final int kFrontLeftDrivingCanId = 9;
+    public static final int kFrontLeftDrivingCanId = 10;
     public static final int kRearLeftDrivingCanId = 14;
     public static final int kFrontRightDrivingCanId = 12;
     public static final int kRearRightDrivingCanId = 16;
 
-    public static final int kFrontLeftTurningCanId = 10;
+    public static final int kFrontLeftTurningCanId = 11;
     public static final int kRearLeftTurningCanId = 15;
     public static final int kFrontRightTurningCanId = 13;
     public static final int kRearRightTurningCanId = 17;
 
     // Zeroed rotation values for each module, see setup instructions
-    public static final Rotation2d frontLeftZeroRotation = new Rotation2d(3.47);
-    public static final Rotation2d frontRightZeroRotation = new Rotation2d(3.8);
-    public static final Rotation2d backLeftZeroRotation = new Rotation2d(0.893);
-    public static final Rotation2d backRightZeroRotation = new Rotation2d(5.513);
+    public static final Rotation2d frontLeftZeroRotation = new Rotation2d(Degrees.of(90));
+    public static final Rotation2d frontRightZeroRotation = new Rotation2d(Degrees.of(0));
+    public static final Rotation2d backLeftZeroRotation = new Rotation2d(Degrees.of(180));
+    public static final Rotation2d backRightZeroRotation = new Rotation2d(Degrees.of(270));
 
     public static final boolean kGyroReversed = false;
 
@@ -174,15 +191,16 @@ public final class Constants {
     public static final int driveMotorCurrentLimit = 50;
     // Calculations required for driving motor conversion factors and feed forward
     public static final double kDrivingMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
-    public static final double kWheelDiameterMeters = Units.inchesToMeters(4);
+    public static final double kWheelDiameterMeters = Units.inchesToMeters(3);
     public static final double wheelRadiusMeters = kWheelDiameterMeters / 2;
     public static final double kWheelCircumferenceMeters = kWheelDiameterMeters * Math.PI;
     // 45 teeth on the wheel's bevel gear, 30 teeth on the first-stage spur gear,
     // 15 teeth on the bevel pinion
     public static final double kDrivingWheelBevelGearTeeth = 45.0;
-    public static final double kDrivingWheelFirstStageSpurGearTeeth = 30.0;
+    public static final double kDrivingWheelFirstStageSpurGearTeeth = 22.0;
     public static final double kDrivingMotorBevelPinionTeeth = 15.0;
-    public static final double kDrivingMotorReduction = 6.3;
+    public static final double kDrivingMotorReduction = 
+      (kDrivingWheelBevelGearTeeth * kDrivingWheelFirstStageSpurGearTeeth) / (kDrivingMotorPinionTeeth * kDrivingMotorBevelPinionTeeth);
     public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters)
         / kDrivingMotorReduction;
 
@@ -205,7 +223,7 @@ public final class Constants {
     // Turn motor configuration
     public static final boolean turnInverted = false;
     public static final int turnMotorCurrentLimit = 40;
-    public static final double turnMotorReduction = 20.0;
+    public static final double turnMotorReduction = 25.0;
     public static final DCMotor turnGearbox = DCMotor.getNeoVortex(1);
 
     // Turn encoder configuration
