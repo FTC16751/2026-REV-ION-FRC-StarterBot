@@ -284,8 +284,9 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier) {
 
-    Supplier<Rotation2d> angle = () -> drive.rotationToTarget().plus(Rotation2d.k180deg);
-    ;
+    // ORIGINAL CODE (kept for reference):
+    // Supplier<Rotation2d> angle = () -> drive.rotationToTarget().plus(Rotation2d.k180deg);
+    Supplier<Rotation2d> angle = () -> drive.rotationToTarget();
     return joystickDriveAtAngle(drive, xSupplier, ySupplier, angle);
   }
 
