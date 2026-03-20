@@ -365,7 +365,7 @@ public class Drive extends SubsystemBase {
       new Translation2d(0, 0),
       new Translation2d(Inches.of(156.61), Inches.of(317.69)));
   static Rectangle2d redAllianceZone = new Rectangle2d(
-      new Translation2d(651.22, 0),
+      new Translation2d(Inches.of(651.22), Inches.of(0)),
       new Translation2d(Inches.of(469.11), Inches.of(317.69)));
 
   public boolean inAllianceZone() {
