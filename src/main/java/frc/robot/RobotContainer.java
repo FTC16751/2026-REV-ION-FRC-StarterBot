@@ -5,6 +5,7 @@
 package frc.robot;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 
@@ -116,6 +117,16 @@ public class RobotContainer {
                                 });
                                 break;
                 }
+
+                // Register Named Commands for PathPlanner
+                NamedCommands.registerCommand("DeployIntake", m_intake.deployIntakeCommand());
+                NamedCommands.registerCommand("RetractIntake", m_intake.retractIntakeCommand());
+                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand());
+                // Re-use the same reliable shooting sequence we built for the Y button
+                NamedCommands.registerCommand("Shoot", m_shooter.runShooterCommand()
+                        .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                                .andThen(m_intake.runConveyorCommand()))
+                        .withTimeout(3.0)); // Timeout ensures auto doesn't hang forever
 
                     // Set up auto routines
                     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
