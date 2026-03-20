@@ -63,8 +63,8 @@ public final class Constants {
 
     public static final class PivotSetpoints {
       public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
-      public static final double kRetractedPosition = 0.455;
-      public static final double kDeployedPosition = 0.07;
+      public static final double kRetractedPosition = 0.33;
+      public static final double kDeployedPosition = 0.0;
       // Cosine feedforward: duty cycle needed to hold arm horizontal (max gravity).
       // Tune: set P=0, slowly increase until arm holds at deployed position without drifting.
       public static final double kCos = 0.05; // 0 = no feedforward; arm falls naturally to deployed under gravity
@@ -154,10 +154,10 @@ public final class Constants {
     public static final int kRearRightTurningCanId = 17;
 
     // Zeroed rotation values for each module, see setup instructions
-    public static final Rotation2d frontLeftZeroRotation = new Rotation2d(Degrees.of(90));
-    public static final Rotation2d frontRightZeroRotation = new Rotation2d(Degrees.of(180));
-    public static final Rotation2d backLeftZeroRotation = new Rotation2d(Degrees.of(0));
-    public static final Rotation2d backRightZeroRotation = new Rotation2d(Degrees.of(270));
+    public static final Rotation2d frontLeftZeroRotation = new Rotation2d(Degrees.of(270));
+    public static final Rotation2d frontRightZeroRotation = new Rotation2d(Degrees.of(0));
+    public static final Rotation2d backLeftZeroRotation = new Rotation2d(Degrees.of(180));
+    public static final Rotation2d backRightZeroRotation = new Rotation2d(Degrees.of(90));
 
     public static final boolean kGyroReversed = false;
 

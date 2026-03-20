@@ -112,15 +112,17 @@ public final class Configs {
         .zeroCentered(true)
         .velocityConversionFactor(1.0 / 60.0) // RPM to RPS
         // These apply to REV Through Bore Encoder V2 (for V1, set them both to 1.0):
-        .startPulseUs(3.88443797)
-        .endPulseUs(1.94221899);
+        //.startPulseUs(3.88443797)
+        //.endPulseUs(1.94221899)
+        ;
   
       pivotConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
         .pid(1.0, 0, 0) //Tune this!
         .outputRange(-0.6, 0.6) // Safety for testing. Tune this!
         .feedForward
-          .kCos(0.05);
+          .kS(.1)
+          .kCos(0.4);
 
     }
   }

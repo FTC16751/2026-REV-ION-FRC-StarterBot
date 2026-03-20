@@ -102,9 +102,8 @@ public class DriveCommands {
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
-                  isFlipped()
-                      ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                      : drive.getRotation()));
+                      drive.getRotation()
+                      .plus(isFlipped() ? Rotation2d.k180deg : Rotation2d.kZero)));
         },
         drive);
   }
@@ -189,9 +188,8 @@ public class DriveCommands {
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
-                  isFlipped()
-                      ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                      : drive.getRotation()));
+                      drive.getRotation()
+                      .plus(isFlipped() ? Rotation2d.k180deg : Rotation2d.kZero)));
         },
         drive)
 
