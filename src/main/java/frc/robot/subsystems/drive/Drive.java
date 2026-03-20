@@ -395,9 +395,12 @@ public class Drive extends SubsystemBase {
     if (targetTranslation.isEmpty()) {
 
       Pose2d targetPose = targetAimPose.orElseGet(DriveCommands::getAllianceGoal); // default to alliance goal
-      targetTranslation = Optional.of(
-          getPose().minus(targetPose)
-              .getTranslation());
+      // ORIGINAL CODE (kept for reference):
+      // targetTranslation = Optional.of(
+      //     getPose().minus(targetPose)
+      //         .getTranslation());
+      // FIX: Target minus Robot gives a field-relative vector pointing directly AT the target, fixing Red Alliance coordinate frame wrapping.
+      targetTranslation = Optional.of(targetPose.getTranslation().minus(getPose().getTranslation()));
     }
     return targetTranslation.get();
   }
