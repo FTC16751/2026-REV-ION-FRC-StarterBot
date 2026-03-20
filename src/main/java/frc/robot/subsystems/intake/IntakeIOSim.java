@@ -96,9 +96,9 @@ public class IntakeIOSim implements IntakeIO {
   }
 
   @Override
-  public void setPivotPosition(double degrees) {
+  public void setPivotPosition(double position) {
     try {
-      pivotSpark.getClosedLoopController().setSetpoint(degrees, com.revrobotics.spark.SparkBase.ControlType.kPosition);
+      pivotSpark.getClosedLoopController().setSetpoint(position, com.revrobotics.spark.SparkBase.ControlType.kPosition);
     } catch (Exception ignored) {
     }
   }

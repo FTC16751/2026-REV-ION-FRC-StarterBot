@@ -94,14 +94,7 @@ public class IntakeIOSpark implements IntakeIO {
 
   @Override
   public void setPivotPosition(double position) {
-    double currentPos = pivotEncoder.getPosition();
-    // Map current position to angle: retracted=π/2 (vertical), deployed=0 (horizontal)
-    double t = (currentPos - Intake.PivotSetpoints.kRetractedPosition)
-        / (Intake.PivotSetpoints.kDeployedPosition - Intake.PivotSetpoints.kRetractedPosition);
-    double angle = (1.0 - t) * (Math.PI / 2.0);
-    // arbFF in REVLib expects Volts. Multiply duty cycle (kCos) by nominal battery voltage (12.0)
-    double arbFFVolts = Intake.PivotSetpoints.kCos * 12.0 * Math.cos(angle);
-    pivotController.setSetpoint(position, ControlType.kPosition, ClosedLoopSlot.kSlot0, arbFFVolts);
+    pivotController.setSetpoint(position, ControlType.kPosition); // motor controller can compute based on kCos itself with feedforward
   }
 
   @Override
