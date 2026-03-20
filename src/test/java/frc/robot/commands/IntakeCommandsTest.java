@@ -6,6 +6,7 @@ import frc.robot.Constants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import org.junit.jupiter.api.Test;
 
 /** Unit tests for Intake deploy/retract commands updating pivot setpoint. */
@@ -15,9 +16,9 @@ public class IntakeCommandsTest {
    * Helper that runs the command then steps the sim via periodic() until the
    * pivot position approaches the expected setpoint (or times out).
    */
-  private void runCommandAndAssertPosition(Intake intake, IntakeIOSim simIO, double expectedDegrees)
+  private void runCommandAndAssertPosition(Intake intake, IntakeIOSim simIO, double expectedPosition)
       throws Exception {
-    var cmd = (expectedDegrees == Constants.Intake.PivotSetpoints.kDeployedDegrees)
+    Command cmd = (expectedPosition == Constants.Intake.PivotSetpoints.kDeployedPosition)
         ? intake.deployIntakeCommand()
         : intake.retractIntakeCommand();
 
@@ -36,7 +37,7 @@ public class IntakeCommandsTest {
       intake.periodic();
       // Also read sim inputs to observe state
       simIO.updateInputs(snapshot);
-      if (Math.abs(snapshot.pivotPosition - expectedDegrees) <= tolDeg) {
+      if (Math.abs(snapshot.pivotPosition - expectedPosition) <= tolDeg) {
         break;
       }
       Thread.sleep(20);
@@ -44,7 +45,7 @@ public class IntakeCommandsTest {
 
     // Always assert the closed-loop target was set on the sim
     simIO.updateInputs(snapshot);
-    assertEquals(expectedDegrees, snapshot.pivotTargetPosition, 1e-3, "Closed-loop target should match expected");
+    assertEquals(expectedPosition, snapshot.pivotTargetPosition, 1e-3, "Closed-loop target should match expected");
 
     // We successfully exercised the subsystem and sim: the closed-loop target
     // on the sim should match the expected setpoint. Movement of the physical
@@ -59,9 +60,9 @@ public class IntakeCommandsTest {
     Intake intake = new Intake(simIO);
 
     // First ensure retract moves to retracted position
-    runCommandAndAssertPosition(intake, simIO, Constants.Intake.PivotSetpoints.kRetractedDegrees);
+    runCommandAndAssertPosition(intake, simIO, Constants.Intake.PivotSetpoints.kRetractedPosition);
 
     // Then ensure deploy moves to deployed position
-    runCommandAndAssertPosition(intake, simIO, Constants.Intake.PivotSetpoints.kDeployedDegrees);
+    runCommandAndAssertPosition(intake, simIO, Constants.Intake.PivotSetpoints.kDeployedPosition);
   }
 }

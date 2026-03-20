@@ -5,8 +5,9 @@ import static frc.robot.util.SparkUtil.*;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
-import com.revrobotics.RelativeEncoder;
+import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
@@ -19,11 +20,12 @@ import frc.robot.Constants.Intake;
 /** Hardware IO implementation for the intake using Spark Flex controllers. */
 public class IntakeIOSpark implements IntakeIO {
   private final SparkFlex intakeMotor = new SparkFlex(Intake.kIntakeMotorCanId, MotorType.kBrushless);
+  private final SparkFlex intakeFollowerMotor = new SparkFlex(Intake.kIntakeFollowerMotorCanId, MotorType.kBrushless);
   private final SparkFlex conveyorMotor = new SparkFlex(Intake.kConveyorMotorCanId, MotorType.kBrushless);
 
   private final SparkFlex pivotMotor = new SparkFlex(Intake.kPivotMotorCanId, MotorType.kBrushless);
   private final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
-  private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
+  private final AbsoluteEncoder pivotEncoder = pivotMotor.getAbsoluteEncoder();
 
   private final Debouncer intakeDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
   private final Debouncer conveyorDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
@@ -32,6 +34,11 @@ public class IntakeIOSpark implements IntakeIO {
   public IntakeIOSpark() {
     intakeMotor.configure(
         Configs.IntakeSubsystem.intakeConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    intakeFollowerMotor.configure(
+        Configs.IntakeSubsystem.intakeFollowerConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
@@ -44,8 +51,6 @@ public class IntakeIOSpark implements IntakeIO {
         Configs.IntakeSubsystem.pivotConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
-
-    pivotEncoder.setPosition(0.0);
   }
 
   @Override
@@ -88,13 +93,20 @@ public class IntakeIOSpark implements IntakeIO {
   }
 
   @Override
-  public void setPivotPosition(double degrees) {
-    pivotController.setSetpoint(degrees, ControlType.kPosition);
+  public void setPivotPosition(double position) {
+    double currentPos = pivotEncoder.getPosition();
+    // Map current position to angle: retracted=π/2 (vertical), deployed=0 (horizontal)
+    double t = (currentPos - Intake.PivotSetpoints.kRetractedPosition)
+        / (Intake.PivotSetpoints.kDeployedPosition - Intake.PivotSetpoints.kRetractedPosition);
+    double angle = (1.0 - t) * (Math.PI / 2.0);
+    // arbFF in REVLib expects Volts. Multiply duty cycle (kCos) by nominal battery voltage (12.0)
+    double arbFFVolts = Intake.PivotSetpoints.kCos * 12.0 * Math.cos(angle);
+    pivotController.setSetpoint(position, ControlType.kPosition, ClosedLoopSlot.kSlot0, arbFFVolts);
   }
 
   @Override
-  public void zeroPivotPosition() {
-    pivotMotor.getEncoder().setPosition(0);
+  public void setPivotDutyCycle(double dutyCycle) {
+    pivotMotor.set(dutyCycle);
   }
 
   @Override

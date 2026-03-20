@@ -15,8 +15,8 @@ public interface IntakeIO {
     public boolean conveyorConnected = true;
 
     // Pivot
-    public double pivotPosition = 0.0; // degrees
-    public double pivotVelocity = 0.0; // degrees / sec 
+    public double pivotPosition = 0.0; // absolute encoder position (0.0–1.0 rotations)
+    public double pivotVelocity = 0.0; // rotations per second (absolute encoder)
     public double pivotAppliedVoltage = 0.0;
     public double pivotCurrent = 0.0;
     public double pivotTargetPosition = 0.0;
@@ -32,10 +32,13 @@ public interface IntakeIO {
   /** Set conveyor motor output in [-1,1]. */
   public default void setConveyorPower(double power) {}
 
-  /** Set pivot position in degrees (closed-loop in hardware). */
-  public default void setPivotPosition(double degrees) {}
+  /** Set pivot target position as an absolute encoder value (0.0–1.0 rotations). */
+  public default void setPivotPosition(double position) {}
 
   public default void zeroPivotPosition() {}
+
+  /** Set pivot motor output in open-loop duty cycle [-1,1]. Used for compliant hold at target. */
+  public default void setPivotDutyCycle(double dutyCycle) {}
 
   /** Stop all outputs. */
   public default void stop() {}

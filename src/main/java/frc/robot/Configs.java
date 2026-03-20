@@ -9,6 +9,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import frc.robot.Constants.Intake;
 import frc.robot.Constants.ModuleConstants;
 
 /**
@@ -78,6 +79,7 @@ public final class Configs {
 
   public static final class IntakeSubsystem {
     public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
+    public static final SparkFlexConfig intakeFollowerConfig = new SparkFlexConfig();
     public static final SparkFlexConfig conveyorConfig = new SparkFlexConfig();
     public static final SparkFlexConfig pivotConfig = new SparkFlexConfig();
 
@@ -89,6 +91,9 @@ public final class Configs {
         .openLoopRampRate(0.5)
         .smartCurrentLimit(40);
 
+      // Configure follower for second intake motor (follows leader, same direction)
+      intakeFollowerConfig.follow(Intake.kIntakeMotorCanId, true);
+
       // Configure basic settings of the conveyor motor
       conveyorConfig
         .inverted(true)
@@ -98,29 +103,23 @@ public final class Configs {
 
       // Configure settings for the intake pivot motor 
       pivotConfig
+        .inverted(true)
         .idleMode(IdleMode.kBrake) // Brake mode to hold position
         .smartCurrentLimit(40);
       
-      /*  
-      *   TODO: 
-      *   validate gear ratio
-      */
-
-      // calculated pivot gear reduction: 12:1 Gearbox (4:1*3*1) * (48T / 16T) Chain = 36:1 geer reduction
-      double pivotReduction = 12.0 * (48.0 / 16.0);
-      double pivotPositionFactor = 360.0 / pivotReduction;
-
-      pivotConfig.encoder
-        .positionConversionFactor(pivotPositionFactor) // Converts Motor Rotations -> Arm Degrees
-        .velocityConversionFactor(pivotPositionFactor / 60.0); // Degrees per second
-
-      // TODO: Tune the feedforward coefficients: https://docs.revrobotics.com/revlib/spark/closed-loop/feed-forward-control
-      // Will need kS, kCos, possibly kCosRatio
-      // TODO: Tune the pid coefficients and output range  
+      pivotConfig.absoluteEncoder
+        .inverted(true)
+        .zeroOffset(Constants.Intake.PivotSetpoints.kZeroOffset)
+        .velocityConversionFactor(1.0 / 60.0) // RPM to RPS
+        // These apply to REV Through Bore Encoder V2 (for V1, set them both to 1.0):
+        .startPulseUs(3.88443797)
+        .endPulseUs(1.94221899);
+  
       pivotConfig.closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(0.05, 0, 0) //Tune this!
-        .outputRange(-0.5, 0.5); // Safety for testing. Tune this!
+        .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+        .pid(1.0, 0, 0) //Tune this!
+        .outputRange(-0.6, 0.6); // Safety for testing. Tune this!
+
     }
   }
 
@@ -156,10 +155,12 @@ public final class Configs {
           .maxAcceleration(10000)
           .allowedProfileError(1);
 
-      // Constants.NeoMotorConstants.kVortexKv is in rpm/V. feedforward.kV is in V/rpm sort we take
-      // the reciprocol.
+      // feedForward.kV is in V/rpm: to spin at N rpm the controller adds (kV * N) volts of FF.
+      // kVortexKv is in rpm/V, so its reciprocal (1/kVortexKv) gives the V/rpm needed for the FF.
+      // BUG NOTE: previously multiplied by nominalVoltage (12), making kV 12× too large and
+      // saturating the motor at 100% duty cycle regardless of the RPM setpoint.
       flywheelConfig.closedLoop
-        .feedForward.kV(nominalVoltage / Constants.NeoMotorConstants.kVortexKv);
+        .feedForward.kV(1.0 / Constants.NeoMotorConstants.kVortexKv); // 1/565 ≈ 0.00177 V/rpm
 
       // Configure the follower flywheel motor to follow the main flywheel motor
       flywheelFollowerConfig.apply(flywheelConfig)

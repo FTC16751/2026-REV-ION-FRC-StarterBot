@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "Bash(powershell.exe -NoProfile -Command \"[System.IO.File]::ReadAllText\\(''C:\\\\Users\\\\Robotics Laptop\\\\FRC Repos\\\\2026-REV-ION-FRC-StarterBot\\\\src\\\\main\\\\java\\\\frc\\\\robot\\\\RobotContainer.java''\\) | Select-String -Pattern ''Reset gyro'' | Select-Object -First 3\")"
+    ]
+  }
+}

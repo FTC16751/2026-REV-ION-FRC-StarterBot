@@ -94,7 +94,7 @@ public class ShooterIOSpark implements ShooterIO {
 
     @Override
     public void setFlywheelVelocity(double rpm) {
-        flywheelController.setSetpoint(rpm, ControlType.kMAXMotionVelocityControl);
+        flywheelController.setSetpoint(rpm, ControlType.kVelocity);
     }
 
     @Override

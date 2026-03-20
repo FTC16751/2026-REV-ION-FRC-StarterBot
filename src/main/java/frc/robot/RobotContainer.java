@@ -8,6 +8,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -53,6 +55,8 @@ public class RobotContainer {
 
     // The driver's controller
     private final CommandXboxController driveCtrlr = new CommandXboxController(OIConstants.kDriverControllerPort);
+    // The operator's controller (all non-driving mechanisms)
+    private final CommandXboxController operatorCtrlr = new CommandXboxController(OIConstants.kOperatorControllerPort);
 
     private final LoggedDashboardChooser<Command> autoChooser;
 
@@ -71,7 +75,7 @@ public class RobotContainer {
                         new ModuleIOSpark(1),
                         new ModuleIOSpark(2),
                         new ModuleIOSpark(3));
-                m_shooter = new Shooter(new ShooterIOSpark());
+                m_shooter = new Shooter(new ShooterIOSpark(), () -> drive.distanceToTarget().in(Meters));
                 m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
                 vision = new Vision(
                         drive::addVisionMeasurement,
@@ -86,7 +90,7 @@ public class RobotContainer {
                                                 new ModuleIOSim(),
                                                 new ModuleIOSim(),
                                                 new ModuleIOSim());
-                                m_shooter = new Shooter(new ShooterIOSim());
+                                m_shooter = new Shooter(new ShooterIOSim(), () -> drive.distanceToTarget().in(Meters));
                                 m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSim());
                                 vision = new Vision(drive::addVisionMeasurement, new VisionIO() {
                                 });
@@ -105,7 +109,7 @@ public class RobotContainer {
                                                 new ModuleIO() {
                                                 });
                                 m_shooter = new Shooter(new ShooterIO() {
-                                });
+                                }, () -> drive.distanceToTarget().in(Meters));
                                 m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIO() {
                                 });
                                 vision = new Vision(drive::addVisionMeasurement, new VisionIO() {
@@ -187,9 +191,9 @@ public class RobotContainer {
 
         // Two different ways to do the same thing:
 
-        // Reset gyro to 0° when B button is pressed
+        // Reset gyro to 0° when Back button is pressed
         driveCtrlr
-                .b()
+                .back()
                 .onTrue(
                         Commands.runOnce(
                                 () -> drive.setPose(
@@ -200,29 +204,50 @@ public class RobotContainer {
         // Start Button -> Zero swerve heading
         driveCtrlr.start().onTrue(drive.zeroHeadingCommand());
 
-                // TODO: extend/retract intake. Possibly as a function of the right trigger
-                // position?
-                // Right Trigger -> Run fuel intake in reverse
-                driveCtrlr
-                                .rightTrigger(OIConstants.kTriggerButtonThreshold)
-                                .whileTrue(m_shooter.runShooterCommand());
+        // ── Operator Controller ──────────────────────────────────────────────────
 
-                // Left trigger all the way -> Run fuel intake in
-                driveCtrlr
-                                .leftTrigger(1 - OIConstants.kTriggerButtonThreshold)
-                                .whileTrue(m_intake.runIntakeCommand());
+        // D-Pad Up/Down: Manual feeder forward / reverse (no flywheel)
+        operatorCtrlr.povUp().whileTrue(m_shooter.runFeederOnlyCommand());
+        operatorCtrlr.povDown().whileTrue(m_shooter.runFeederReverseCommand());
 
-                // Left Trigger -> set arm position
-                driveCtrlr.leftTrigger(OIConstants.kTriggerButtonThreshold)
-                                .whileTrue(m_intake.deployIntakeCommand())
-                                .onFalse(m_intake.retractIntakeCommand());
+        // D-Pad Left/Right: Manual conveyor forward / reverse
+        operatorCtrlr.povLeft().whileTrue(m_intake.runConveyorCommand());
+        operatorCtrlr.povRight().whileTrue(m_intake.runConveyorReverseCommand());
 
-                // Y Button -> Spin up flywheel, then run feeder + conveyor once at speed
-                driveCtrlr.y().toggleOnTrue(
-                                m_shooter.runShooterCommand()
-                                                .alongWith(
-                                                                Commands.waitUntil(m_shooter.isFlywheelSpinning)
-                                                                                .andThen(m_intake.runIntakeCommand())));
+        // RT: Intake forward at trigger-proportional speed
+        operatorCtrlr
+                .rightTrigger(OIConstants.kTriggerButtonThreshold)
+                .whileTrue(m_intake.runIntakeOnlyCommand(operatorCtrlr::getRightTriggerAxis));
+
+        // LT: Intake reverse at trigger-proportional speed
+        operatorCtrlr
+                .leftTrigger(OIConstants.kTriggerButtonThreshold)
+                .whileTrue(m_intake.runIntakeOnlyCommand(() -> -operatorCtrlr.getLeftTriggerAxis()));
+
+        // RB: Deploy intake arm to deployed position
+        operatorCtrlr.rightBumper().onTrue(m_intake.deployIntakeCommand());
+
+        // LB: Retract intake arm to retracted position
+        operatorCtrlr.leftBumper().onTrue(m_intake.retractIntakeCommand());
+
+        // Left Stick Y: Fine-tune arm position (deadbanded; push forward = toward deployed)
+        operatorCtrlr.axisGreaterThan(1, OIConstants.kDriveDeadband)
+                .or(operatorCtrlr.axisLessThan(1, -OIConstants.kDriveDeadband))
+                .whileTrue(m_intake.nudgePivotCommand(() -> operatorCtrlr.getLeftY()));
+
+        // Y Button: Full shoot sequence (spin up → feeder + conveyor when at speed)
+        operatorCtrlr.y().toggleOnTrue(
+                m_shooter.runShooterCommand()
+                        .alongWith(
+                                Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                                        .andThen(m_intake.runConveyorCommand())));
+
+        // A Button: Toggle auto/manual shooter speed mode
+        operatorCtrlr.a().onTrue(m_shooter.toggleAutoSpeedCommand());
+
+        // X/B Buttons: Adjust shooter target speed -/+ 100 RPM
+        operatorCtrlr.x().onTrue(m_shooter.adjustShooterSpeedCommand(-100));
+        operatorCtrlr.b().onTrue(m_shooter.adjustShooterSpeedCommand(+100));
 
                 // D-pad snap to heading (field-relative)
                 driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(

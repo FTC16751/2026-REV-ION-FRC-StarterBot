@@ -62,23 +62,23 @@ public final class Constants {
     }
 
     public static final class PivotSetpoints {
-      public static final double kZeroOffset = 0.0; // Adjust this if you need to zero the absolute encoder externally
-      public static final double kRetractedPosition = .0;//0.487;
-      public static final double kDeployedPosition =0.317;// 0.82;
+      public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
+      public static final double kRetractedPosition = 0.455;
+      public static final double kDeployedPosition = 0.07;
       // Cosine feedforward: duty cycle needed to hold arm horizontal (max gravity).
       // Tune: set P=0, slowly increase until arm holds at deployed position without drifting.
-      public static final double kCos = 0.75;
+      public static final double kCos = 0.05; // 0 = no feedforward; arm falls naturally to deployed under gravity
       // Stall detection: snap target to actual position if motor fights this long
-      public static final double kStallCurrentAmps = 25.0;
+      public static final double kStallCurrentAmps = 20.0;
       public static final double kPositionTolerance = 0.02; // rotations — min error to consider "still fighting"
       // Compliant hold latch activation tolerance — larger than kPositionTolerance so the arm
       // doesn't need to land exactly on target to enter compliant mode.
-      public static final double kCompliantHoldTolerance = 0.05;
+      public static final double kCompliantHoldTolerance = 0.01;
       // Nudge: rotations added to pivotTarget per 20ms cycle while button held (~0.25 rot/sec)
       public static final double kNudgePerCycle = 0.005;
       // true  = Option 1: open-loop (kCos only) once arm reaches deployed target — compliant to jams
       // false = original: always closed-loop position control
-      public static final boolean kUseCompliantHold = true;
+      public static final boolean kUseCompliantHold = false;
     }
 
     // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
@@ -89,8 +89,8 @@ public final class Constants {
   }
 
   public static final class ShooterSubsystemConstants {
-    public static final int kFeederMotorCanId = 22; // SPARK Flex CAN ID
-    public static final int kFlywheelMotorCanId = 20; // SPARK Flex CAN ID (Right)
+    public static final int kFeederMotorCanId = 20; // SPARK Flex CAN ID
+    public static final int kFlywheelMotorCanId = 22; // SPARK Flex CAN ID (Right)
     public static final int kFlywheelFollowerMotorCanId = 21; // SPARK Flex CAN ID (Left)
 
     public static final class FeederSetpoints {
@@ -98,7 +98,8 @@ public final class Constants {
     }
 
     public static final class FlywheelSetpoints {
-      public static final double kShootRpm = 5000;
+      public static final double kShootRpm = 4500;
+      public static final double kMaxRpm = 6000; // hard cap for operator speed adjustments
       public static final double kVelocityTolerance = 100;
     }
   }
@@ -242,6 +243,7 @@ public final class Constants {
 
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
+    public static final int kOperatorControllerPort = 1;
     public static final double kDriveDeadband = 0.1;
     public static final double kTriggerButtonThreshold = 0.2;
   }
