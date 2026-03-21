@@ -64,7 +64,7 @@ public final class Constants {
     public static final class PivotSetpoints {
       public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
       public static final double kRetractedPosition = 0.33;
-      public static final double kDeployedPosition = 0.0;
+      public static final double kDeployedPosition = 0.054;
       // Cosine feedforward: duty cycle needed to hold arm horizontal (max gravity).
       // Tune: set P=0, slowly increase until arm holds at deployed position without drifting.
       public static final double kCos = 0.05; // 0 = no feedforward; arm falls naturally to deployed under gravity
@@ -94,7 +94,7 @@ public final class Constants {
     public static final int kFlywheelFollowerMotorCanId = 21; // SPARK Flex CAN ID (Left)
 
     public static final class FeederSetpoints {
-      public static final double kFeed = 0.95;
+      public static final double kFeed = 1.00;
     }
 
     public static final class FlywheelSetpoints {
