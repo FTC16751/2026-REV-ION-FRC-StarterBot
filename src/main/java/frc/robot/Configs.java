@@ -146,6 +146,14 @@ public final class Configs {
         .openLoopRampRate(1.0)
         .smartCurrentLimit(80);
 
+      // Reduce the default velocity filtering to decrease phase lag.
+      //https://www.chiefdelphi.com/t/psa-rev-spark-default-velocity-filtering-is-still-really-bad-for-flywheels/514567/18
+      flywheelConfig.encoder
+          .uvwMeasurementPeriod(16)
+          .uvwAverageDepth(2)
+          .quadratureMeasurementPeriod(16)
+          .quadratureAverageDepth(2);
+
       /*
        * Configure the closed loop controller. We want to make sure we set the
        * feedback sensor as the primary encoder.
