@@ -16,11 +16,9 @@ import frc.robot.Constants.Intake;
 public class IntakeIOSim implements IntakeIO {
   // Motors
   private final SparkFlex intakeSpark = new SparkFlex(Intake.kIntakeMotorCanId, MotorType.kBrushless);
-  private final SparkFlex conveyorSpark = new SparkFlex(Intake.kConveyorMotorCanId, MotorType.kBrushless);
   private final SparkFlex pivotSpark = new SparkFlex(Intake.kPivotMotorCanId, MotorType.kBrushless);
 
   private final SparkFlexSim intakeSim = new SparkFlexSim(intakeSpark, DCMotor.getNeoVortex(1));
-  private final SparkFlexSim conveyorSim = new SparkFlexSim(conveyorSpark, DCMotor.getNeoVortex(1));
   private final SparkFlexSim pivotSim = new SparkFlexSim(pivotSpark, DCMotor.getNeoVortex(1));
 
   // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
@@ -61,12 +59,10 @@ public class IntakeIOSim implements IntakeIO {
 
     // Iterate spark sims so controllers update their internal state
     intakeSim.iterate(now, dt, battery);
-    conveyorSim.iterate(now, dt, battery);
     pivotSim.iterate(now, dt, battery);
 
-    // Intake & conveyor: read applied voltage/current from the Spark
+    // Intake: read applied voltage/current from the Spark
     inputs.intakeAppliedVoltage = intakeSpark.getAppliedOutput() * battery;
-    inputs.conveyorAppliedVoltage = conveyorSpark.getAppliedOutput() * battery;
 
     // Pivot: drive arm sim with motor applied voltage
     double appliedVolts = pivotSpark.getAppliedOutput() * battery;
@@ -114,14 +110,8 @@ public class IntakeIOSim implements IntakeIO {
   }
 
   @Override
-  public void setConveyorPower(double power) {
-    conveyorSpark.set(power);
-  }
-
-  @Override
   public void stop() {
     try { intakeSpark.stopMotor(); } catch (Exception ignored) {}
-    try { conveyorSpark.stopMotor(); } catch (Exception ignored) {}
     try { pivotSpark.stopMotor(); } catch (Exception ignored) {}
   }
 }

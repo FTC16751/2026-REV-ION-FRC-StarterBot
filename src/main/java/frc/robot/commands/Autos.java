@@ -23,6 +23,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.conveyor.Conveyor;
 
 public final class Autos {
 
@@ -75,14 +76,14 @@ public final class Autos {
    * a simple auto that shoots for 5 seconds.
    * it runs the shooter command and the new Conveyor command in parallel (i think).
    */
-  public static Command simpleAuto(Shooter shooter, Intake intake) {
+  public static Command simpleAuto(Shooter shooter, Intake intake, Conveyor conveyor) {
     return Commands.parallel(
         // run the shooter sequence (Spin Up then activate Feeder (i think))
         shooter.runShooterCommand(),
         
         // run the conveyor, but WAIT until the flywheel is ready so we don't jam it up
         Commands.waitUntil(shooter.isFlywheelSpinning::getAsBoolean)
-            .andThen(intake.runConveyorCommand())
+            .andThen(conveyor.runConveyorCommand())
             
     ).withTimeout(5.0) // Stop everything after 5 seconds
     .withName("Simple Auto");

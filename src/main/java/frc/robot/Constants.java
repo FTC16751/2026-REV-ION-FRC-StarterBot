@@ -49,16 +49,10 @@ public final class Constants {
     public static final int kIntakeMotorCanId = 31; // SPARK Flex CAN ID
     public static final int kIntakeFollowerMotorCanId = 32; // SPARK Flex CAN ID (follower)
     public static final int kPivotMotorCanId = 30; // SPARK Flex CAN ID (New Pivot Motor)
-    public static final int kConveyorMotorCanId = 23; // SPARK Flex CAN ID
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.5;
       public static final double kExtake = -0.5;
-    }
-
-    public static final class ConveyorSetpoints {
-      public static final double kIntake = 1.0;
-      public static final double kExtake = -0.7;
     }
 
     public static final class PivotSetpoints {
@@ -86,6 +80,15 @@ public final class Constants {
     public static final double ARM_MASS_KG = 1.0; // 1 kg
     // Use a modest gearing (motor -> arm) to match configs pivot conversion factor; use 36:1 as in Configs comments
     public static final double GEARING = 36.0;
+  }
+
+  public static final class Conveyor {
+    public static final int kConveyorMotorCanId = 23; // SPARK Flex CAN ID
+    
+    public static final class ConveyorSetpoints {
+      public static final double kIntake = 1.0;
+      public static final double kExtake = -0.7;
+    }
   }
 
   public static final class ShooterSubsystemConstants {

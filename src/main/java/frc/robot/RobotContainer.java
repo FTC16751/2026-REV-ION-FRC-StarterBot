@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.Autos;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.intake.Intake;
@@ -27,6 +28,10 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.conveyor.Conveyor;
+import frc.robot.subsystems.conveyor.ConveyorIO;
+import frc.robot.subsystems.conveyor.ConveyorIOSim;
+import frc.robot.subsystems.conveyor.ConveyorIOSpark;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIO;
 import frc.robot.subsystems.shooter.ShooterIOSim;
@@ -52,6 +57,7 @@ public class RobotContainer {
     public Shooter m_shooter;
 
           public Intake m_intake;
+          public Conveyor m_conveyor;
           private static RobotContainer instance;
 
     // The driver's controller
@@ -78,6 +84,7 @@ public class RobotContainer {
                         new ModuleIOSpark(3));
                 m_shooter = new Shooter(new ShooterIOSpark(), () -> drive.distanceToTarget().in(Meters));
                 m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSpark());
+                m_conveyor = new Conveyor(new ConveyorIOSpark());
                 vision = new Vision(
                         drive::addVisionMeasurement,
                         new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation));
@@ -93,6 +100,7 @@ public class RobotContainer {
                                                 new ModuleIOSim());
                                 m_shooter = new Shooter(new ShooterIOSim(), () -> drive.distanceToTarget().in(Meters));
                                 m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIOSim());
+                                m_conveyor = new Conveyor(new ConveyorIOSim());
                                 vision = new Vision(drive::addVisionMeasurement, new VisionIO() {
                                 });
                                 break;
@@ -113,6 +121,8 @@ public class RobotContainer {
                                 }, () -> drive.distanceToTarget().in(Meters));
                                 m_intake = new Intake(new frc.robot.subsystems.intake.IntakeIO() {
                                 });
+                                m_conveyor = new Conveyor(new ConveyorIO() {
+                                });
                                 vision = new Vision(drive::addVisionMeasurement, new VisionIO() {
                                 });
                                 break;
@@ -122,14 +132,19 @@ public class RobotContainer {
                 NamedCommands.registerCommand("DeployIntake", m_intake.deployIntakeCommand());
                 NamedCommands.registerCommand("RetractIntake", m_intake.retractIntakeCommand());
                 NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand());
+                // Recombine intake and conveyor for PathPlanner
+                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand().alongWith(m_conveyor.runConveyorCommand()));
                 // Re-use the same reliable shooting sequence we built for the Y button
                 NamedCommands.registerCommand("Shoot", m_shooter.runShooterCommand()
                         .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
-                                .andThen(m_intake.runConveyorCommand()))
+                                .andThen(m_conveyor.runConveyorCommand()))
                         .withTimeout(3.0)); // Timeout ensures auto doesn't hang forever
 
                     // Set up auto routines
                     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+
+                    // Add Custom Autos
+                    autoChooser.addOption("Simple Auto", Autos.simpleAuto(m_shooter, m_intake, m_conveyor));
 
                     // Set up SysId routines
                     autoChooser.addOption(
@@ -222,18 +237,20 @@ public class RobotContainer {
         operatorCtrlr.povDown().whileTrue(m_shooter.runFeederReverseCommand());
 
         // D-Pad Left/Right: Manual conveyor forward / reverse
-        operatorCtrlr.povLeft().whileTrue(m_intake.runConveyorCommand());
-        operatorCtrlr.povRight().whileTrue(m_intake.runConveyorReverseCommand());
+        operatorCtrlr.povLeft().whileTrue(m_conveyor.runConveyorCommand());
+        operatorCtrlr.povRight().whileTrue(m_conveyor.runConveyorReverseCommand());
 
         // RT: Intake forward at trigger-proportional speed
         operatorCtrlr
                 .rightTrigger(OIConstants.kTriggerButtonThreshold)
-                .whileTrue(m_intake.runIntakeOnlyCommand(operatorCtrlr::getRightTriggerAxis));
+                .whileTrue(m_intake.runIntakeOnlyCommand(operatorCtrlr::getRightTriggerAxis)
+                        .alongWith(m_conveyor.runConveyorCommand()));
 
         // LT: Intake reverse at trigger-proportional speed
         operatorCtrlr
                 .leftTrigger(OIConstants.kTriggerButtonThreshold)
-                .whileTrue(m_intake.runIntakeOnlyCommand(() -> -operatorCtrlr.getLeftTriggerAxis()));
+                .whileTrue(m_intake.runIntakeOnlyCommand(() -> -operatorCtrlr.getLeftTriggerAxis())
+                        .alongWith(m_conveyor.runConveyorReverseCommand()));
 
         // RB: Deploy intake arm to deployed position
         operatorCtrlr.rightBumper().onTrue(m_intake.deployIntakeCommand());
@@ -251,7 +268,7 @@ public class RobotContainer {
                 m_shooter.runShooterCommand()
                         .alongWith(
                                 Commands.waitUntil(m_shooter.isFlywheelSpinning)
-                                        .andThen(m_intake.runConveyorCommand())));
+                                        .andThen(m_conveyor.runConveyorCommand())));
 
         // A Button: Toggle auto/manual shooter speed mode
         operatorCtrlr.a().onTrue(m_shooter.toggleAutoSpeedCommand());

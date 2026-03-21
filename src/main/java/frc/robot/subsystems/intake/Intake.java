@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
-import frc.robot.Constants.Intake.ConveyorSetpoints;
 import frc.robot.Constants.Intake.IntakeSetpoints;
 import frc.robot.Constants.Intake.PivotSetpoints;
 
@@ -60,10 +59,6 @@ public class Intake extends SubsystemBase {
     io.setIntakePower(MathUtil.clamp(power, -1.0, 1.0));
   }
 
-  private void setConveyorPower(double power) {
-    io.setConveyorPower(MathUtil.clamp(power, -1.0, 1.0));
-  }
-
   private void setPivotPosition(double position) {
     pivotTarget = MathUtil.clamp(position,
         Math.min(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition),
@@ -78,11 +73,9 @@ public class Intake extends SubsystemBase {
     return this.startEnd(
         () -> {
           this.setIntakePower(IntakeSetpoints.kIntake);
-          this.setConveyorPower(ConveyorSetpoints.kIntake);
         },
         () -> {
           this.setIntakePower(0.0);
-          this.setConveyorPower(0.0);
         }).withName("Intaking");
   }
 
@@ -96,28 +89,14 @@ public class Intake extends SubsystemBase {
     return this.startEnd(
         () -> {
           this.setIntakePower(IntakeSetpoints.kExtake);
-          this.setConveyorPower(ConveyorSetpoints.kExtake);
         },
         () -> {
           this.setIntakePower(0.0);
-          this.setConveyorPower(0.0);
         }).withName("Extaking");
   }
 
   public Command runIntakeForTime(double seconds) {
     return runIntakeCommand().withTimeout(seconds).withName(String.format("Intaking for %.2fs", seconds));
-  }
-
-  public Command runConveyorCommand() {
-    return this.startEnd(
-        () -> this.setConveyorPower(ConveyorSetpoints.kIntake),
-        () -> this.setConveyorPower(0.0)).withName("Run Conveyor");
-  }
-
-  public Command runConveyorReverseCommand() {
-    return this.startEnd(
-        () -> this.setConveyorPower(ConveyorSetpoints.kExtake),
-        () -> this.setConveyorPower(0.0)).withName("Reverse Conveyor");
   }
 
   /**

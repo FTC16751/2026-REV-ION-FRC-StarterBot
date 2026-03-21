@@ -80,7 +80,6 @@ public final class Configs {
   public static final class IntakeSubsystem {
     public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
     public static final SparkFlexConfig intakeFollowerConfig = new SparkFlexConfig();
-    public static final SparkFlexConfig conveyorConfig = new SparkFlexConfig();
     public static final SparkFlexConfig pivotConfig = new SparkFlexConfig();
 
     static {
@@ -93,13 +92,6 @@ public final class Configs {
 
       // Configure follower for second intake motor (follows leader, same direction)
       intakeFollowerConfig.follow(Intake.kIntakeMotorCanId, true);
-
-      // Configure basic settings of the conveyor motor
-      conveyorConfig
-        .inverted(true)
-        .idleMode(IdleMode.kCoast)
-        .openLoopRampRate(0.5)
-        .smartCurrentLimit(40);
 
       // Configure settings for the intake pivot motor 
       pivotConfig
@@ -124,6 +116,19 @@ public final class Configs {
           .kS(.1)
           .kCos(0.4);
 
+    }
+  }
+
+  public static final class ConveyorSubsystem {
+    public static final SparkFlexConfig conveyorConfig = new SparkFlexConfig();
+
+    static {
+      // Configure basic settings of the conveyor motor
+      conveyorConfig
+        .inverted(true)
+        .idleMode(IdleMode.kCoast)
+        .openLoopRampRate(0.5)
+        .smartCurrentLimit(40);
     }
   }
 

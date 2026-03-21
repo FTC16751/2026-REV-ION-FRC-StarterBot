@@ -21,14 +21,12 @@ import frc.robot.Constants.Intake;
 public class IntakeIOSpark implements IntakeIO {
   private final SparkFlex intakeMotor = new SparkFlex(Intake.kIntakeMotorCanId, MotorType.kBrushless);
   private final SparkFlex intakeFollowerMotor = new SparkFlex(Intake.kIntakeFollowerMotorCanId, MotorType.kBrushless);
-  private final SparkFlex conveyorMotor = new SparkFlex(Intake.kConveyorMotorCanId, MotorType.kBrushless);
 
   private final SparkFlex pivotMotor = new SparkFlex(Intake.kPivotMotorCanId, MotorType.kBrushless);
   private final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
   private final AbsoluteEncoder pivotEncoder = pivotMotor.getAbsoluteEncoder();
 
   private final Debouncer intakeDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
-  private final Debouncer conveyorDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
   private final Debouncer pivotDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
 
   public IntakeIOSpark() {
@@ -39,11 +37,6 @@ public class IntakeIOSpark implements IntakeIO {
 
     intakeFollowerMotor.configure(
         Configs.IntakeSubsystem.intakeFollowerConfig,
-        ResetMode.kResetSafeParameters,
-        PersistMode.kPersistParameters);
-
-    conveyorMotor.configure(
-        Configs.IntakeSubsystem.conveyorConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
@@ -61,14 +54,6 @@ public class IntakeIOSpark implements IntakeIO {
       inputs.intakeAppliedVoltage = values[0] * values[1];
     });
     inputs.intakeConnected = intakeDebouncer.calculate(!sparkStickyFault);
-
-    // Conveyor
-    sparkStickyFault = false;
-    ifOk(conveyorMotor, new DoubleSupplier[] { conveyorMotor::getAppliedOutput, conveyorMotor::getBusVoltage },
-        (values) -> {
-          inputs.conveyorAppliedVoltage = values[0] * values[1];
-        });
-    inputs.conveyorConnected = conveyorDebouncer.calculate(!sparkStickyFault);
 
     // Pivot
     sparkStickyFault = false;
@@ -88,11 +73,6 @@ public class IntakeIOSpark implements IntakeIO {
   }
 
   @Override
-  public void setConveyorPower(double power) {
-    conveyorMotor.set(power);
-  }
-
-  @Override
   public void setPivotPosition(double position) {
     pivotController.setSetpoint(position, ControlType.kPosition); // motor controller can compute based on kCos itself with feedforward
   }
@@ -105,7 +85,6 @@ public class IntakeIOSpark implements IntakeIO {
   @Override
   public void stop() {
       intakeMotor.stopMotor();
-      conveyorMotor.stopMotor();
       pivotMotor.stopMotor();
   }
 }

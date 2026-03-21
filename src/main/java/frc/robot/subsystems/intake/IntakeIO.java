@@ -10,10 +10,6 @@ public interface IntakeIO {
     public double intakeAppliedVoltage = 0.0;
     public boolean intakeConnected = true;
 
-    // Conveyor
-    public double conveyorAppliedVoltage = 0.0;
-    public boolean conveyorConnected = true;
-
     // Pivot
     public double pivotPosition = 0.0; // absolute encoder position (0.0–1.0 rotations)
     public double pivotVelocity = 0.0; // rotations per second (absolute encoder)
@@ -28,9 +24,6 @@ public interface IntakeIO {
 
   /** Set intake motor output in [-1,1]. */
   public default void setIntakePower(double power) {}
-
-  /** Set conveyor motor output in [-1,1]. */
-  public default void setConveyorPower(double power) {}
 
   /** Set pivot target position as an absolute encoder value (0.0–1.0 rotations). */
   public default void setPivotPosition(double position) {}
