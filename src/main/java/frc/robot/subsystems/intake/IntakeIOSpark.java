@@ -23,6 +23,7 @@ public class IntakeIOSpark implements IntakeIO {
   private final SparkFlex intakeFollowerMotor = new SparkFlex(Intake.kIntakeFollowerMotorCanId, MotorType.kBrushless);
 
   private final SparkFlex pivotMotor = new SparkFlex(Intake.kPivotMotorCanId, MotorType.kBrushless);
+  private final SparkFlex pivotFollowerMotor = new SparkFlex(Intake.kPivotFollowerMotorCanId, MotorType.kBrushless);
   private final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
   private final AbsoluteEncoder pivotEncoder = pivotMotor.getAbsoluteEncoder();
 
@@ -42,6 +43,11 @@ public class IntakeIOSpark implements IntakeIO {
 
     pivotMotor.configure(
         Configs.IntakeSubsystem.pivotConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    pivotFollowerMotor.configure(
+        Configs.IntakeSubsystem.pivotFollowerConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
   }
@@ -86,5 +92,6 @@ public class IntakeIOSpark implements IntakeIO {
   public void stop() {
       intakeMotor.stopMotor();
       pivotMotor.stopMotor();
+      pivotFollowerMotor.stopMotor();
   }
 }

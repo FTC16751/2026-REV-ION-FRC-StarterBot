@@ -81,6 +81,7 @@ public final class Configs {
     public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
     public static final SparkFlexConfig intakeFollowerConfig = new SparkFlexConfig();
     public static final SparkFlexConfig pivotConfig = new SparkFlexConfig();
+    public static final SparkFlexConfig pivotFollowerConfig = new SparkFlexConfig();
 
     static {
       // Configure basic settings of the intake motor
@@ -92,6 +93,9 @@ public final class Configs {
 
       // Configure follower for second intake motor (follows leader, same direction)
       intakeFollowerConfig.follow(Intake.kIntakeMotorCanId, true);
+
+      // Configure follower for right pivot motor (follows leader, inverted since it's on the opposite side)
+      pivotFollowerConfig.follow(Intake.kPivotMotorCanId, true);
 
       // Configure settings for the intake pivot motor 
       pivotConfig
@@ -114,7 +118,7 @@ public final class Configs {
         .outputRange(-0.6, 0.6) // Safety for testing. Tune this!
         .feedForward
           .kS(.1)
-          .kCos(0.4);
+          .kCos(0.0000014);
 
     }
   }

@@ -56,7 +56,7 @@ public class Intake extends SubsystemBase {
   }
 
   private void setIntakePower(double power) {
-    io.setIntakePower(MathUtil.clamp(power, -1.0, 1.0));
+    io.setIntakePower(MathUtil.clamp(power, -IntakeSetpoints.kMaxPower, IntakeSetpoints.kMaxPower));
   }
 
   private void setPivotPosition(double position) {

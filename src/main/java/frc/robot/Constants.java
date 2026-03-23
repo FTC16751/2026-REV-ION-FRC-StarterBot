@@ -49,16 +49,18 @@ public final class Constants {
     public static final int kIntakeMotorCanId = 31; // SPARK Flex CAN ID
     public static final int kIntakeFollowerMotorCanId = 32; // SPARK Flex CAN ID (follower)
     public static final int kPivotMotorCanId = 30; // SPARK Flex CAN ID (New Pivot Motor)
+    public static final int kPivotFollowerMotorCanId = 33; // SPARK Flex CAN ID (Right Pivot Motor, follower)
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.5;
       public static final double kExtake = -0.5;
+      public static final double kMaxPower = 0.8; // hard cap on intake roller output
     }
 
     public static final class PivotSetpoints {
       public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
       public static final double kRetractedPosition = 0.33;
-      public static final double kDeployedPosition = 0.054;
+      public static final double kDeployedPosition = 0.050;
       // Cosine feedforward: duty cycle needed to hold arm horizontal (max gravity).
       // Tune: set P=0, slowly increase until arm holds at deployed position without drifting.
       public static final double kCos = 0.05; // 0 = no feedforward; arm falls naturally to deployed under gravity
@@ -86,8 +88,9 @@ public final class Constants {
     public static final int kConveyorMotorCanId = 23; // SPARK Flex CAN ID
     
     public static final class ConveyorSetpoints {
-      public static final double kIntake = 1.0;
-      public static final double kExtake = -0.7;
+      public static final double kConveyorSpeedLaunch     = 1.0;  // full speed — used during launch
+      public static final double kConveyorSpeedIntake = 0.4;  // slower speed — used while intaking
+      public static final double kConveyorExtakeSpeed     = -0.7;
     }
   }
 
@@ -249,6 +252,10 @@ public final class Constants {
     public static final int kOperatorControllerPort = 1;
     public static final double kDriveDeadband = 0.1;
     public static final double kTriggerButtonThreshold = 0.2;
+    public static final double kNormalSpeedMultiplier    = 0.8;
+    public static final double kSlowSpeedMultiplier      = 0.50;
+    public static final double kSuperSlowSpeedMultiplier = 0.25; // LB + RB held simultaneously
+    public static final double kFastSpeedMultiplier      = 1.0;
   }
 
   public static final class AutoConstants {
