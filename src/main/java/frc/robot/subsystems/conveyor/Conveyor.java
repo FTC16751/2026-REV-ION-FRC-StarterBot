@@ -26,13 +26,19 @@ public class Conveyor extends SubsystemBase {
 
   public Command runConveyorCommand() {
     return this.startEnd(
-        () -> setConveyorPower(Constants.Conveyor.ConveyorSetpoints.kIntake),
+        () -> setConveyorPower(Constants.Conveyor.ConveyorSetpoints.kConveyorSpeedLaunch),
         () -> setConveyorPower(0.0)).withName("Run Conveyor");
+  }
+
+  public Command runConveyorIntakeCommand() {
+    return this.startEnd(
+        () -> setConveyorPower(Constants.Conveyor.ConveyorSetpoints.kConveyorSpeedIntake),
+        () -> setConveyorPower(0.0)).withName("Run Conveyor (Intake)");
   }
 
   public Command runConveyorReverseCommand() {
     return this.startEnd(
-        () -> setConveyorPower(Constants.Conveyor.ConveyorSetpoints.kExtake),
+        () -> setConveyorPower(Constants.Conveyor.ConveyorSetpoints.kConveyorExtakeSpeed),
         () -> setConveyorPower(0.0)).withName("Reverse Conveyor");
   }
 
