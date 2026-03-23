@@ -225,9 +225,9 @@ public class RobotContainer {
                         () -> -driveCtrlr.getLeftX()  * getDriveSpeedMultiplier(),
                         () -> -driveCtrlr.getRightX() * getDriveSpeedMultiplier()));
 
-        // Lock to 0° Alliance Relative when A button is held
+        // B: Lock facing alliance station (0° alliance-relative) while held
         driveCtrlr
-                .a()
+                .b()
                 .whileTrue(
                         DriveCommands.joystickDriveAtAngle(
                                 drive,
@@ -235,6 +235,26 @@ public class RobotContainer {
                                 () -> -driveCtrlr.getLeftX(),
                                 () -> DriveCommands.isFlipped() ? Rotation2d.kZero
                                         : Rotation2d.k180deg));
+
+        // A: Snap to -45° for crossing angled field hump
+        driveCtrlr
+                .a()
+                .whileTrue(
+                        DriveCommands.joystickDriveAtAngle(
+                                drive,
+                                () -> -driveCtrlr.getLeftY(),
+                                () -> -driveCtrlr.getLeftX(),
+                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 135 : 315)));
+
+        // Y: Snap to +45° for crossing angled field hump
+        driveCtrlr
+                .y()
+                .whileTrue(
+                        DriveCommands.joystickDriveAtAngle(
+                                drive,
+                                () -> -driveCtrlr.getLeftY(),
+                                () -> -driveCtrlr.getLeftX(),
+                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 225 : 45)));
 
         driveCtrlr.rightStick()
                 .whileTrue(DriveCommands.joystickDriveSnake(
