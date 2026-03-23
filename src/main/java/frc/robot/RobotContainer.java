@@ -28,6 +28,8 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.LEDSubsystem.LEDState;
 import frc.robot.subsystems.conveyor.Conveyor;
 import frc.robot.subsystems.conveyor.ConveyorIO;
 import frc.robot.subsystems.conveyor.ConveyorIOSim;
@@ -40,6 +42,8 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -51,14 +55,15 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-    // The robot's subsystems and commands are defined here...
-    public Vision vision;
-    public Drive drive;
-    public Shooter m_shooter;
+        // The robot's subsystems and commands are defined here...
+        public Vision vision;
+        public Drive drive;
+        public Shooter m_shooter;
 
-          public Intake m_intake;
-          public Conveyor m_conveyor;
-          private static RobotContainer instance;
+        public Intake m_intake;
+        public Conveyor m_conveyor;
+        private static RobotContainer instance;
+        private final LEDSubsystem m_leds = new LEDSubsystem();
 
     // The driver's controller
     private final CommandXboxController driveCtrlr = new CommandXboxController(OIConstants.kDriverControllerPort);
@@ -133,7 +138,7 @@ public class RobotContainer {
                 NamedCommands.registerCommand("RetractIntake", m_intake.retractIntakeCommand());
                 NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand());
                 // Recombine intake and conveyor for PathPlanner
-                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand().alongWith(m_conveyor.runConveyorCommand()));
+                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand().alongWith(m_conveyor.runConveyorIntakeCommand()));
                 // Re-use the same reliable shooting sequence we built for the Y button
                 NamedCommands.registerCommand("Shoot", m_shooter.runShooterCommand()
                         .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
@@ -164,7 +169,38 @@ public class RobotContainer {
                                         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
                     // Configure the trigger bindings
                     configureBindings();
+                    
+                    // Configure the LED behaviors
+                    configureLEDTriggers();
           }
+
+    private void configureLEDTriggers() {
+        // 1. DEFAULT STATE: If nothing else is happening, show the match mode.
+        m_leds.setDefaultCommand(Commands.run(() -> {
+            if (DriverStation.isDisabled()) {
+                m_leds.setState(LEDState.IDLE);
+            } else if (DriverStation.isAutonomous()) {
+                m_leds.setState(LEDState.AUTO);
+            } else {
+                m_leds.setState(LEDState.TELEOP);
+            }
+        }, m_leds).ignoringDisable(true));
+
+        // 2. END GAME: Last 30 seconds of Teleop
+        new Trigger(() -> DriverStation.isTeleopEnabled() && DriverStation.getMatchTime() > 0 && DriverStation.getMatchTime() <= 30)
+            .whileTrue(Commands.run(() -> m_leds.setState(LEDState.END_GAME), m_leds));
+
+        // 3. LOW BATTERY: Battery dips below 11.0V (ignoring disable so it flashes in the pits if battery is dead)
+        new Trigger(() -> RobotController.getBatteryVoltage() < 11.0)
+            .whileTrue(Commands.run(() -> m_leds.setState(LEDState.LOW_BATTERY), m_leds).ignoringDisable(true));
+
+        // 4. AIM LOCKED: Robot is aimed at goal within 8 degrees
+        new Trigger(() -> drive.isAimedAtTarget(8.0))
+            .whileTrue(Commands.run(() -> m_leds.setState(LEDState.AIM_LOCKED), m_leds));
+            
+        // Note: Because WPILib command scheduling is "last scheduled wins", triggers defined lower down 
+        // will override triggers defined above them if both conditions are true.
+    }
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be
@@ -181,14 +217,13 @@ public class RobotContainer {
      * joysticks}.
      */
     private void configureBindings() {
-        // Default command, normal field-relative drive
+        // Default command, normal field-relative drive at cruise speed
         drive.setDefaultCommand(
-                DriveCommands.joystickDriveAbsoluteAngle(
+                DriveCommands.joystickDrive(
                         drive,
-                        () -> -driveCtrlr.getLeftY(),
-                        () -> -driveCtrlr.getLeftX(),
-                        () -> -driveCtrlr.getRightY(),
-                        () -> -driveCtrlr.getRightX()));
+                        () -> -driveCtrlr.getLeftY()  * getDriveSpeedMultiplier(),
+                        () -> -driveCtrlr.getLeftX()  * getDriveSpeedMultiplier(),
+                        () -> -driveCtrlr.getRightX() * getDriveSpeedMultiplier()));
 
         // Lock to 0° Alliance Relative when A button is held
         driveCtrlr
@@ -210,7 +245,8 @@ public class RobotContainer {
         // Switch to X pattern when X button is pressed
         driveCtrlr.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-        driveCtrlr.rightBumper()
+        // RT: Auto-aim to goal
+        driveCtrlr.rightTrigger(OIConstants.kTriggerButtonThreshold)
                 .whileTrue(DriveCommands.joystickDriveAim(drive,
                         () -> -driveCtrlr.getLeftY(),
                         () -> -driveCtrlr.getLeftX()));
@@ -221,10 +257,7 @@ public class RobotContainer {
         driveCtrlr
                 .back()
                 .onTrue(
-                        Commands.runOnce(
-                                () -> drive.setPose(
-                                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                                drive)
+                        Commands.runOnce(drive::resetHeadingToAlliance, drive)
                                 .ignoringDisable(true));
 
         // Start Button -> Zero swerve heading
@@ -244,7 +277,7 @@ public class RobotContainer {
         operatorCtrlr
                 .rightTrigger(OIConstants.kTriggerButtonThreshold)
                 .whileTrue(m_intake.runIntakeOnlyCommand(operatorCtrlr::getRightTriggerAxis)
-                        .alongWith(m_conveyor.runConveyorCommand()));
+                        .alongWith(m_conveyor.runConveyorIntakeCommand()));
 
         // LT: Intake reverse at trigger-proportional speed
         operatorCtrlr
@@ -277,32 +310,42 @@ public class RobotContainer {
         operatorCtrlr.x().onTrue(m_shooter.adjustShooterSpeedCommand(-100));
         operatorCtrlr.b().onTrue(m_shooter.adjustShooterSpeedCommand(+100));
 
-                // D-pad snap to heading (field-relative)
+                // D-pad snap to heading (alliance-aware: Up = away from your station)
                 driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
                                 drive,
                                 () -> -driveCtrlr.getLeftY(),
                                 () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(0)));
+                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 180 : 0)));
 
                 driveCtrlr.povRight().whileTrue(DriveCommands.joystickDriveAtAngle(
                                 drive,
                                 () -> -driveCtrlr.getLeftY(),
                                 () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(-90)));
+                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 270 : 90)));
 
                 driveCtrlr.povDown().whileTrue(DriveCommands.joystickDriveAtAngle(
                                 drive,
                                 () -> -driveCtrlr.getLeftY(),
                                 () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(180)));
+                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 0 : 180)));
 
                 driveCtrlr.povLeft().whileTrue(DriveCommands.joystickDriveAtAngle(
                                 drive,
                                 () -> -driveCtrlr.getLeftY(),
                                 () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(90)));
+                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 90 : 270)));
 
         drive.inAllianceZoneTrigger().onTrue(DriveCommands.setGoalTargetCommand());
+    }
+
+    /** Returns drive speed scalar: LB+RB = super slow, LB = slow, RB = burst, default = cruise. */
+    private double getDriveSpeedMultiplier() {
+        boolean lb = driveCtrlr.leftBumper().getAsBoolean();
+        boolean rb = driveCtrlr.rightBumper().getAsBoolean();
+        if (lb && rb) return OIConstants.kSuperSlowSpeedMultiplier;
+        if (lb)       return OIConstants.kSlowSpeedMultiplier;
+        if (rb)       return OIConstants.kFastSpeedMultiplier;
+        return OIConstants.kNormalSpeedMultiplier;
     }
 
     /**
@@ -316,5 +359,18 @@ public class RobotContainer {
 
     public static RobotContainer getInstance() {
         return instance;
+    }
+
+    public void onTeleopInit() {
+            m_leds.setState(LEDState.TELEOP);
+            drive.resetHeadingToAlliance();
+    }
+
+    public void onAutonomousInit() {
+            m_leds.setState(LEDState.AUTO);
+    }
+
+    public void onDisabledInit() {
+            m_leds.setState(LEDState.IDLE);
     }
 }

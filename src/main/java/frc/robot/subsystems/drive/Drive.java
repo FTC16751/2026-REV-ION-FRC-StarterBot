@@ -328,9 +328,15 @@ public class Drive extends SubsystemBase {
     poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
   }
 
-  /** Zeroes the heading of the robot. */
+  /** Resets heading to the alliance-correct forward direction (Blue=0°, Red=180°). */
+  public void resetHeadingToAlliance() {
+    setPose(new Pose2d(getPose().getTranslation(),
+        isRedAlliance() ? Rotation2d.k180deg : Rotation2d.kZero));
+  }
+
+  /** Zeroes the heading of the robot (alliance-aware). */
   public Command zeroHeadingCommand() {
-    return this.runOnce(() -> gyroIO.zeroYaw());
+    return this.runOnce(this::resetHeadingToAlliance);
   }
 
   /** Adds a new timestamped vision measurement. */
@@ -380,6 +386,11 @@ public class Drive extends SubsystemBase {
 
   public Rotation2d rotationToTarget() {
     return translationToTarget().getAngle();
+  }
+
+  public boolean isAimedAtTarget(double toleranceDegrees) {
+    double errorDegrees = Math.abs(getRotation().minus(rotationToTarget()).getDegrees());
+    return errorDegrees <= toleranceDegrees;
   }
 
   public Distance distanceToTarget() {
