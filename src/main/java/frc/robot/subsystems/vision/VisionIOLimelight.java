@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 public class VisionIOLimelight implements VisionIO {
   private final Supplier<Rotation2d> rotationSupplier;
   private final DoubleArrayPublisher orientationPublisher;
+  private final DoubleArrayPublisher cameraPosePublisher;
 
   private final DoubleSubscriber latencySubscriber;
   private final DoubleSubscriber txSubscriber;
@@ -43,6 +44,7 @@ public class VisionIOLimelight implements VisionIO {
     var table = NetworkTableInstance.getDefault().getTable(name);
     this.rotationSupplier = rotationSupplier;
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
+    cameraPosePublisher = table.getDoubleArrayTopic("camerapose_robotspace_set").publish();
     latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
     txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
     tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
@@ -66,6 +68,17 @@ public class VisionIOLimelight implements VisionIO {
     // Update orientation for MegaTag 2
     orientationPublisher.accept(
         new double[] {rotationSupplier.get().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0});
+
+    // Publish camera pose so Limelight knows where it is on the robot
+    var t = VisionConstants.robotToCamera0;
+    cameraPosePublisher.accept(new double[] {
+        t.getX(),
+        t.getY(),
+        t.getZ(),
+        Units.radiansToDegrees(t.getRotation().getX()),
+        Units.radiansToDegrees(t.getRotation().getY()),
+        Units.radiansToDegrees(t.getRotation().getZ())
+    });
     NetworkTableInstance.getDefault()
         .flush(); // Increases network traffic but recommended by Limelight
 
