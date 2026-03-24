@@ -13,6 +13,8 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,6 +30,12 @@ import frc.robot.Constants.Intake.PivotSetpoints;
 public class Intake extends SubsystemBase {
   private final IntakeIO io;
   private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+
+  private final Alert intakeDisconnectedAlert =
+      new Alert("Intake roller motor disconnected.", AlertType.kError);
+  private final Alert pivotDisconnectedAlert =
+      new Alert("Intake pivot motor disconnected.", AlertType.kError);
+
   private double pivotTarget = PivotSetpoints.kRetractedPosition;
   private boolean inCompliantHold = false;
   private final Debouncer pivotStallDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
@@ -190,6 +198,8 @@ public class Intake extends SubsystemBase {
     armLig.setAngle(Degrees.of(visualDegrees));
 
     Logger.processInputs("Intake", inputs);
+    intakeDisconnectedAlert.set(!inputs.intakeConnected);
+    pivotDisconnectedAlert.set(!inputs.pivotConnected);
   }
 
 }

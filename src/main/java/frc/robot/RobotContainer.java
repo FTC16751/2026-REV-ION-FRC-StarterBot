@@ -22,14 +22,14 @@ import frc.robot.commands.Autos;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.led.LEDSubsystem;
+import frc.robot.subsystems.led.LEDSubsystem.LEDState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
-import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.LEDSubsystem.LEDState;
 import frc.robot.subsystems.conveyor.Conveyor;
 import frc.robot.subsystems.conveyor.ConveyorIO;
 import frc.robot.subsystems.conveyor.ConveyorIOSim;
@@ -174,6 +174,9 @@ public class RobotContainer {
                     configureLEDTriggers();
           }
 
+    /** Maximum reliable shot distance — matches the upper bound of the shooter RPM lookup table. */
+    private static final double MAX_SHOT_DISTANCE_METERS = 5.0;
+
     private void configureLEDTriggers() {
         // 1. DEFAULT STATE: If nothing else is happening, show the match mode.
         m_leds.setDefaultCommand(Commands.run(() -> {
@@ -194,7 +197,12 @@ public class RobotContainer {
         new Trigger(() -> RobotController.getBatteryVoltage() < 11.0)
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.LOW_BATTERY), m_leds).ignoringDisable(true));
 
-        // 4. AIM LOCKED: Robot is aimed at goal within 8 degrees
+        // 4. TOO FAR: Robot is outside reliable shooting range → orange blink
+        new Trigger(() -> DriverStation.isTeleopEnabled()
+                && drive.distanceToTarget().in(Meters) > MAX_SHOT_DISTANCE_METERS)
+            .whileTrue(Commands.run(() -> m_leds.setState(LEDState.TOO_FAR), m_leds));
+
+        // 5. AIM LOCKED: Robot is aimed at goal within 8 degrees (overrides TOO_FAR when aimed)
         new Trigger(() -> drive.isAimedAtTarget(8.0))
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.AIM_LOCKED), m_leds));
             

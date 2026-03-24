@@ -10,6 +10,8 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -22,6 +24,13 @@ public class Shooter extends SubsystemBase {
   private final ShooterIO io;
   // The annotation processor will generate ShooterIOInputsAutoLogged
   private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+
+  private final Alert flywheelDisconnectedAlert =
+      new Alert("Shooter flywheel motor disconnected.", AlertType.kError);
+  private final Alert flyFollowerDisconnectedAlert =
+      new Alert("Shooter flywheel follower motor disconnected.", AlertType.kError);
+  private final Alert feederDisconnectedAlert =
+      new Alert("Shooter feeder motor disconnected.", AlertType.kError);
 
   // Mutable shoot speed — adjusted by operator X/B buttons (manual) or table (auto)
   private double currentShootRpm = FlywheelSetpoints.kShootRpm;
@@ -172,6 +181,9 @@ public class Shooter extends SubsystemBase {
     }
 
     Logger.processInputs("Shooter", inputs);
+    flywheelDisconnectedAlert.set(!inputs.flywheelConnected);
+    flyFollowerDisconnectedAlert.set(!inputs.flyFollowerConnected);
+    feederDisconnectedAlert.set(!inputs.feederConnected);
     Logger.recordOutput("Shooter/currentShootRpm", currentShootRpm);
     Logger.recordOutput("Shooter/autoSpeedMode", autoSpeedMode);
     Logger.recordOutput("Shooter/distanceToTargetMeters", distanceToTargetMeters.getAsDouble());

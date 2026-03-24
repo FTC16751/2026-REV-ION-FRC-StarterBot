@@ -3,6 +3,8 @@ package frc.robot.subsystems.conveyor;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -10,6 +12,9 @@ import frc.robot.Constants;
 public class Conveyor extends SubsystemBase {
   private final ConveyorIO io;
   private final ConveyorIOInputsAutoLogged inputs = new ConveyorIOInputsAutoLogged();
+
+  private final Alert conveyorDisconnectedAlert =
+      new Alert("Conveyor motor disconnected.", AlertType.kError);
 
   public Conveyor(ConveyorIO io) {
     this.io = io;
