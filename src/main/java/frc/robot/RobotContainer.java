@@ -315,11 +315,10 @@ public class RobotContainer {
         operatorCtrlr.povLeft().whileTrue(m_conveyor.runConveyorCommand());
         operatorCtrlr.povRight().whileTrue(m_conveyor.runConveyorReverseCommand());
 
-        // RT: Intake forward at trigger-proportional speed
+        // RT: Intake forward at trigger-proportional speed (roller only, no conveyor)
         operatorCtrlr
                 .rightTrigger(OIConstants.kTriggerButtonThreshold)
-                .whileTrue(m_intake.runIntakeOnlyCommand(operatorCtrlr::getRightTriggerAxis)
-                        .alongWith(m_conveyor.runConveyorIntakeCommand()));
+                .whileTrue(m_intake.runIntakeOnlyCommand(operatorCtrlr::getRightTriggerAxis));
 
         // LT: Intake reverse at trigger-proportional speed
         operatorCtrlr
