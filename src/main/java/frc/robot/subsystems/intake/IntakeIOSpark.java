@@ -91,6 +91,7 @@ public class IntakeIOSpark implements IntakeIO {
   @Override
   public void stop() {
       intakeMotor.stopMotor();
+      intakeFollowerMotor.stopMotor();
       pivotMotor.stopMotor();
       pivotFollowerMotor.stopMotor();
   }

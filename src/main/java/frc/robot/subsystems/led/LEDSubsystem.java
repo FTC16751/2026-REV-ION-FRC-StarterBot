@@ -234,7 +234,7 @@ public class LEDSubsystem extends SubsystemBase {
         // message, the shift schedule is unknown. Alert the drive team immediately —
         // they need to verify manually whether our hub is active before shooting.
         // (Does not fire in simulation/practice where there is no FMS.)
-        if (isTeleop && m_teleopTimer.hasElapsed(1.0)
+        if (isTeleop && DriverStation.isFMSAttached() && m_teleopTimer.hasElapsed(1.0)
                 && DriverStation.getGameSpecificMessage().isEmpty()) {
             patternAlertStrobe(); // white/red alternating at 5 Hz
             m_led.setData(m_buffer);
@@ -244,7 +244,7 @@ public class LEDSubsystem extends SubsystemBase {
         // ── P3: Active shift ending soon → urgent yellow/orange wave ─────────────
         // When OUR hub window is active and about to close, show an urgent wave
         // pattern to signal the driver to SHOOT NOW before the window ends.
-        if (isTeleop && isOurShiftActive() && shiftTimeRemaining() < SHIFT_WARN_TIME) {
+        if (isTeleop && DriverStation.isFMSAttached() && isOurShiftActive() && shiftTimeRemaining() < SHIFT_WARN_TIME) {
             patternWave(255, 220, 0, 255, 80, 0); // yellow ↔ deep orange
             m_led.setData(m_buffer);
             return;
@@ -280,15 +280,13 @@ public class LEDSubsystem extends SubsystemBase {
             case IDLE -> patternBreatheColor(255, 50, 0, 255, 200, 0);
 
             // Teleop: shift-aware indicator.
-            //   Green wave  = our hub is ACTIVE  → score now!
-            //   Orange solid = our hub is INACTIVE → defend, collect, wait
-            // Before game data arrives (m_gameDataParsed=false), isOurShiftActive()
-            // defaults to shift 0 which is always active, so green shows briefly.
+            //   Blue/purple wave = our hub is ACTIVE  → score now!
+            //   Orange solid     = our hub is INACTIVE → defend, collect, wait
             case TELEOP -> {
                 if (isTeleop && isOurShiftActive())
-                    patternWave(0, 200, 0, 0, 60, 0);  // green wave = hub active
+                    patternWave(0, 100, 255, 75, 0, 130); // blue ↔ purple = hub active
                 else
-                    patternSolid(255, 80, 0);           // orange solid = hub inactive
+                    patternSolid(255, 80, 0);              // orange solid = hub inactive
             }
 
             // Vision target acquired — blink orange to alert operator

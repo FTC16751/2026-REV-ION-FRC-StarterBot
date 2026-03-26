@@ -45,6 +45,7 @@ public class Shooter extends SubsystemBase {
   private static final InterpolatingDoubleTreeMap shooterRpmTable = new InterpolatingDoubleTreeMap();
   static {
     shooterRpmTable.put(1.5, 3500.0); // close range  (~5 ft)
+    shooterRpmTable.put(2.0, 4400.0); // ~6.5 ft — tuned +10% from observed 4000
     shooterRpmTable.put(2.5, 4500.0); // medium range (~8 ft)
     shooterRpmTable.put(3.5, 5200.0); // far range    (~11 ft)
     shooterRpmTable.put(5.0, 5500.0); // max effective range (~16 ft)

@@ -7,7 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TestPath"
+            "pathName": "Left Bump Backup and Shoot Preload"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "DeployIntake"
           }
         },
         {

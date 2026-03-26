@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -143,7 +144,7 @@ public class RobotContainer {
                 NamedCommands.registerCommand("Shoot", m_shooter.runShooterCommand()
                         .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
                                 .andThen(m_conveyor.runConveyorCommand()))
-                        .withTimeout(3.0)); // Timeout ensures auto doesn't hang forever
+                        .withTimeout(7.0)); // Timeout ensures auto doesn't hang forever
 
                     // Set up auto routines
                     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -172,6 +173,19 @@ public class RobotContainer {
                     
                     // Configure the LED behaviors
                     configureLEDTriggers();
+
+                    // Forward ports for Limelight
+                    PortForwarder.add(5800, "172.29.0.1", 5800);
+                    PortForwarder.add(5801, "172.29.0.1", 5801);
+                    PortForwarder.add(5802, "172.29.0.1", 5802);
+                    PortForwarder.add(5803, "172.29.0.1", 5803);
+                    PortForwarder.add(5804, "172.29.0.1", 5804);
+                    PortForwarder.add(5805, "172.29.0.1", 5805);
+                    PortForwarder.add(5806, "172.29.0.1", 5806);
+                    PortForwarder.add(5807, "172.29.0.1", 5807);
+                    PortForwarder.add(5808, "172.29.0.1", 5808);
+                    PortForwarder.add(5809, "172.29.0.1", 5809);
+
           }
 
     /** Maximum reliable shot distance — matches the upper bound of the shooter RPM lookup table. */
@@ -188,7 +202,7 @@ public class RobotContainer {
                 m_leds.setState(LEDState.TELEOP);
             }
         }, m_leds).ignoringDisable(true));
-
+/*
         // 2. END GAME: Last 30 seconds of Teleop
         new Trigger(() -> DriverStation.isTeleopEnabled() && DriverStation.getMatchTime() > 0 && DriverStation.getMatchTime() <= 30)
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.END_GAME), m_leds));
@@ -201,7 +215,7 @@ public class RobotContainer {
         new Trigger(() -> DriverStation.isTeleopEnabled()
                 && drive.distanceToTarget().in(Meters) > MAX_SHOT_DISTANCE_METERS)
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.TOO_FAR), m_leds));
-
+ */
         // 5. AIM LOCKED: Robot is aimed at goal within 8 degrees (overrides TOO_FAR when aimed)
         new Trigger(() -> drive.isAimedAtTarget(8.0))
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.AIM_LOCKED), m_leds));
@@ -339,29 +353,29 @@ public class RobotContainer {
         operatorCtrlr.b().onTrue(m_shooter.adjustShooterSpeedCommand(+100));
 
                 // D-pad snap to heading (alliance-aware: Up = away from your station)
-                driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
-                                drive,
-                                () -> -driveCtrlr.getLeftY(),
-                                () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 180 : 0)));
+        driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX(),
+                        () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 180 : 0)));
 
-                driveCtrlr.povRight().whileTrue(DriveCommands.joystickDriveAtAngle(
-                                drive,
-                                () -> -driveCtrlr.getLeftY(),
-                                () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 270 : 90)));
+        driveCtrlr.povRight().whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX(),
+                        () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 270 : 90)));
 
-                driveCtrlr.povDown().whileTrue(DriveCommands.joystickDriveAtAngle(
-                                drive,
-                                () -> -driveCtrlr.getLeftY(),
-                                () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 0 : 180)));
+        driveCtrlr.povDown().whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX(),
+                        () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 0 : 180)));
 
-                driveCtrlr.povLeft().whileTrue(DriveCommands.joystickDriveAtAngle(
-                                drive,
-                                () -> -driveCtrlr.getLeftY(),
-                                () -> -driveCtrlr.getLeftX(),
-                                () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 90 : 270)));
+        driveCtrlr.povLeft().whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -driveCtrlr.getLeftY(),
+                        () -> -driveCtrlr.getLeftX(),
+                        () -> Rotation2d.fromDegrees(DriveCommands.isFlipped() ? 90 : 270)));
 
         drive.inAllianceZoneTrigger().onTrue(DriveCommands.setGoalTargetCommand());
     }

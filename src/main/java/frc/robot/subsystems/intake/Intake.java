@@ -11,7 +11,6 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -37,8 +36,7 @@ public class Intake extends SubsystemBase {
       new Alert("Intake pivot motor disconnected.", AlertType.kError);
 
   private double pivotTarget = PivotSetpoints.kRetractedPosition;
-  private boolean inCompliantHold = false;
-  private final Debouncer pivotStallDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
+  private boolean m_freeDeployMode = false;
   private LoggedMechanism2d mechanism = new LoggedMechanism2d(3, 3);
   private LoggedMechanismLigament2d armLig;
 
@@ -47,15 +45,9 @@ public class Intake extends SubsystemBase {
     armLig = new LoggedMechanismLigament2d("IntakeArm", Meters.of(Constants.Intake.ARM_LENGTH_METERS),
         Degrees.of(0.0));
     mechanism.getRoot("IntakeBase", Inches.of(20).in(Meters), Inches.of(0).in(Meters)).append(armLig);
-    // Initialize pivotTarget from actual encoder position so the arm holds in place on enable
-    // rather than snapping to kRetractedPosition if the arm is somewhere else.
-    IntakeIO.IntakeIOInputs initialInputs = new IntakeIO.IntakeIOInputs();
-    io.updateInputs(initialInputs);
-    pivotTarget = MathUtil.clamp(initialInputs.pivotPosition,
-        Math.min(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition),
-        Math.max(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition));
+    // Always start retracted — arm retracts on first enable regardless of physical position.
+    pivotTarget = PivotSetpoints.kRetractedPosition;
     System.out.println("---> Intake initialized (IO based)");
-    slamBottom().debounce(1).onTrue(runOnce(this::zeroPivotPosition));
   }
 
   /** Convenience constructor: constructs a hardware IO implementation. */
@@ -156,39 +148,23 @@ public class Intake extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
 
-    // Stall protection: if motor is fighting but not moving, snap target to actual position
-    boolean stalling = inputs.pivotCurrent > PivotSetpoints.kStallCurrentAmps
-        && Math.abs(inputs.pivotVelocity) < 0.05
-        && Math.abs(inputs.pivotPosition - pivotTarget) > PivotSetpoints.kPositionTolerance;
-    boolean isStalled = pivotStallDebouncer.calculate(stalling);
-
-    // Compliant hold latch: enter when arm reaches deployed target, stay until target changes away.
-    // This prevents the PID from fighting a jammed ball even when it pushes the arm beyond tolerance.
+    // Free-deploy mode: once arm reaches deployed target, release PID entirely.
+    // Arm floats freely — gravity holds it down, balls can push up without jamming.
     boolean isDeployTarget = Math.abs(pivotTarget - PivotSetpoints.kDeployedPosition) < 1e-9;
-    if (isDeployTarget) {
-      if (Math.abs(inputs.pivotPosition - pivotTarget) < PivotSetpoints.kCompliantHoldTolerance || isStalled) {
-        inCompliantHold = true; // latch on
-      }
-    } else {
-      inCompliantHold = false; // target changed (e.g. retract commanded) — exit compliant mode
+    if (isDeployTarget
+        && Math.abs(inputs.pivotPosition - PivotSetpoints.kDeployedPosition) < PivotSetpoints.kCompliantHoldTolerance) {
+      m_freeDeployMode = true;
+    }
+    if (!isDeployTarget) {
+      m_freeDeployMode = false; // nudge or retract commanded — PID takes over immediately
     }
 
-    // Only snap the target to the stall position if we haven't safely yielded into compliant mode
-    if (isStalled && !(PivotSetpoints.kUseCompliantHold && inCompliantHold)) {
-      pivotTarget = MathUtil.clamp(inputs.pivotPosition,
-          Math.min(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition),
-          Math.max(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition));
-    }
-
-    if (PivotSetpoints.kUseCompliantHold && inCompliantHold) {
-      double t = (inputs.pivotPosition - PivotSetpoints.kRetractedPosition)
-          / (PivotSetpoints.kDeployedPosition - PivotSetpoints.kRetractedPosition);
-      double angle = (1.0 - t) * (Math.PI / 2.0);
-      io.setPivotDutyCycle(PivotSetpoints.kCos * Math.cos(angle));
+    if (m_freeDeployMode) {
+      io.setPivotDutyCycle(0.0); // zero output — arm moves freely
     } else {
       io.setPivotPosition(pivotTarget);
     }
-    Logger.recordOutput("Intake/inCompliantHold", inCompliantHold);
+    Logger.recordOutput("Intake/freeDeployMode", m_freeDeployMode);
     Logger.recordOutput("Intake/pivotTarget", pivotTarget);
     
     // Map absolute values back to degrees solely for visualizing on the dashboard

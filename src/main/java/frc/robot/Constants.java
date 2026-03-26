@@ -61,20 +61,13 @@ public final class Constants {
       public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
       public static final double kRetractedPosition = 0.33;
       public static final double kDeployedPosition = 0.050;
-      // Cosine feedforward: duty cycle needed to hold arm horizontal (max gravity).
-      // Tune: set P=0, slowly increase until arm holds at deployed position without drifting.
-      public static final double kCos = 0.05; // 0 = no feedforward; arm falls naturally to deployed under gravity
-      // Stall detection: snap target to actual position if motor fights this long
-      public static final double kStallCurrentAmps = 20.0;
-      public static final double kPositionTolerance = 0.02; // rotations — min error to consider "still fighting"
-      // Compliant hold latch activation tolerance — larger than kPositionTolerance so the arm
-      // doesn't need to land exactly on target to enter compliant mode.
+      // Cosine feedforward constant — reserved for future gravity-hold tuning, currently unused.
+      public static final double kCos = 0.05;
+      public static final double kPositionTolerance = 0.02; // rotations — PID at-target threshold
+      // How close the arm must be to kDeployedPosition before free-deploy mode engages.
       public static final double kCompliantHoldTolerance = 0.01;
       // Nudge: rotations added to pivotTarget per 20ms cycle while button held (~0.25 rot/sec)
       public static final double kNudgePerCycle = 0.005;
-      // true  = Option 1: open-loop (kCos only) once arm reaches deployed target — compliant to jams
-      // false = original: always closed-loop position control
-      public static final boolean kUseCompliantHold = false;
     }
 
     // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
