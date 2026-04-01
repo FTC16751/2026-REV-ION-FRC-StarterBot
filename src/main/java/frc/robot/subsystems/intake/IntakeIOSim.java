@@ -30,6 +30,7 @@ public class IntakeIOSim implements IntakeIO {
   private final SingleJointedArmSim armSim;
 
   private double lastTime = Timer.getFPGATimestamp();
+  private double pivotSetpoint = 0.0;
 
   public IntakeIOSim() {
     // Use WPILib's SingleJointedArmSim constructor that takes (DCMotor, gearing, jKgMetersSquared,
@@ -46,7 +47,7 @@ public class IntakeIOSim implements IntakeIO {
         minAngle,
         maxAngle,
         true,
-        0.0);
+        Math.PI / 2.0);
   }
 
   @Override
@@ -77,10 +78,7 @@ public class IntakeIOSim implements IntakeIO {
     inputs.pivotVelocity = armSim.getVelocityRadPerSec();
     inputs.pivotAppliedVoltage = appliedVolts;
     inputs.pivotCurrent = Math.abs(armSim.getCurrentDrawAmps());
-    // Try to read target setpoint from the pivot Spark's closed loop controller
-    try {
-      inputs.pivotTargetPosition = pivotSpark.getClosedLoopController().getSetpoint();
-    } catch (Exception ignored) {}
+    inputs.pivotTargetPosition = pivotSetpoint;
 
     // Push simulated encoder position back into the SparkFlex external encoder sim so the controller can read it
     try {
@@ -93,6 +91,7 @@ public class IntakeIOSim implements IntakeIO {
 
   @Override
   public void setPivotPosition(double position) {
+    pivotSetpoint = position;
     try {
       pivotSpark.getClosedLoopController().setSetpoint(position, com.revrobotics.spark.SparkBase.ControlType.kPosition);
     } catch (Exception ignored) {
