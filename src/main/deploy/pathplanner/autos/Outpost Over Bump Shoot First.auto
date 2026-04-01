@@ -5,15 +5,21 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "DepotBump"
+            "name": "Shoot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "DeployIntake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "OutpostBump"
           }
         }
       ]
