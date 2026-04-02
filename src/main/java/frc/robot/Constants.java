@@ -54,7 +54,7 @@ public final class Constants {
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.5;
       public static final double kExtake = -0.5;
-      public static final double kMaxPower = 0.8; // hard cap on intake roller output
+      public static final double kMaxPower = 1; // hard cap on intake roller output
     }
 
     public static final class PivotSetpoints {
@@ -245,10 +245,10 @@ public final class Constants {
     public static final int kOperatorControllerPort = 1;
     public static final double kDriveDeadband = 0.1;
     public static final double kTriggerButtonThreshold = 0.2;
-    public static final double kNormalSpeedMultiplier    = 0.8;
+    public static final double kNormalSpeedMultiplier    = 1.0;
     public static final double kSlowSpeedMultiplier      = 0.50;
     public static final double kSuperSlowSpeedMultiplier = 0.25; // LB + RB held simultaneously
-    public static final double kFastSpeedMultiplier      = 1.0;
+    public static final double kFastSpeedMultiplier      = 0.8;
   }
 
   public static final class AutoConstants {

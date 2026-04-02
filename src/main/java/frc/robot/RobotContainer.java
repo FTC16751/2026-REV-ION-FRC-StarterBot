@@ -137,9 +137,11 @@ public class RobotContainer {
                 // Register Named Commands for PathPlanner
                 NamedCommands.registerCommand("DeployIntake", m_intake.deployIntakeCommand());
                 NamedCommands.registerCommand("RetractIntake", m_intake.retractIntakeCommand());
-                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand());
+                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand()
+                        .withTimeout(3.0));
                 // Recombine intake and conveyor for PathPlanner
-                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand().alongWith(m_conveyor.runConveyorIntakeCommand()));
+                NamedCommands.registerCommand("RunIntake", m_intake.runIntakeCommand().alongWith(m_conveyor.runConveyorIntakeCommand())
+                        .withTimeout(3.0));
                 // Re-use the same reliable shooting sequence we built for the Y button
                 NamedCommands.registerCommand("Shoot", m_shooter.runShooterCommand()
                         .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
