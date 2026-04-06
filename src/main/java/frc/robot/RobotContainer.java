@@ -242,11 +242,11 @@ public class RobotContainer {
         // 2. END GAME: Last 30 seconds of Teleop
         new Trigger(() -> DriverStation.isTeleopEnabled() && DriverStation.getMatchTime() > 0 && DriverStation.getMatchTime() <= 30)
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.END_GAME), m_leds));
-
+*/
         // 3. LOW BATTERY: Battery dips below 11.0V (ignoring disable so it flashes in the pits if battery is dead)
         new Trigger(() -> RobotController.getBatteryVoltage() < 11.0)
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.LOW_BATTERY), m_leds).ignoringDisable(true));
-
+/* 
         // 4. TOO FAR: Robot is outside reliable shooting range → orange blink
         new Trigger(() -> DriverStation.isTeleopEnabled()
                 && drive.distanceToTarget().in(Meters) > MAX_SHOT_DISTANCE_METERS)
