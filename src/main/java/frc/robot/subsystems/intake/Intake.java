@@ -169,6 +169,8 @@ public class Intake extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double periodicStartTime = Timer.getFPGATimestamp();
+
     io.updateInputs(inputs);
 
     // Free-deploy mode: once arm reaches deployed target, release PID entirely.
@@ -199,6 +201,12 @@ public class Intake extends SubsystemBase {
     Logger.processInputs("Intake", inputs);
     intakeDisconnectedAlert.set(!inputs.intakeConnected);
     pivotDisconnectedAlert.set(!inputs.pivotConnected);
-  }
 
+    // Log the currently running command
+    Command currentCommand = this.getCurrentCommand();
+    Logger.recordOutput("Intake/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
+
+    // Log periodic execution time
+    Logger.recordOutput("Intake/PeriodicExecutionTimeMs", (Timer.getFPGATimestamp() - periodicStartTime) * 1000.0);
+  }
 }

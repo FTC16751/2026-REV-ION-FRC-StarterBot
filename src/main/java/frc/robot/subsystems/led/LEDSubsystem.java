@@ -211,6 +211,17 @@ public class LEDSubsystem extends SubsystemBase {
     // ─────────────────────────────────────────────────────────────────────────
     @Override
     public void periodic() {
+        double periodicStartTime = Timer.getFPGATimestamp();
+        try {
+            periodicInternal();
+        } finally {
+            Command currentCommand = this.getCurrentCommand();
+            Logger.recordOutput("LEDs/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
+            Logger.recordOutput("LEDs/PeriodicExecutionTimeMs", (Timer.getFPGATimestamp() - periodicStartTime) * 1000.0);
+        }
+    }
+
+    private void periodicInternal() {
         boolean isTeleop  = DriverStation.isTeleopEnabled();
         boolean isEnabled = DriverStation.isEnabled();
 
@@ -336,10 +347,6 @@ public class LEDSubsystem extends SubsystemBase {
         }
 
         applyAndSend();
-
-        // Log the currently running command
-        Command currentCommand = this.getCurrentCommand();
-        Logger.recordOutput("LEDs/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

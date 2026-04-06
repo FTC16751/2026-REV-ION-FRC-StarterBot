@@ -6,6 +6,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -49,7 +50,16 @@ public class Conveyor extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double periodicStartTime = Timer.getFPGATimestamp();
+
     io.updateInputs(inputs);
     Logger.processInputs("Conveyor", inputs);
+
+    // Log the currently running command
+    Command currentCommand = this.getCurrentCommand();
+    Logger.recordOutput("Conveyor/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
+
+    // Log periodic execution time
+    Logger.recordOutput("Conveyor/PeriodicExecutionTimeMs", (Timer.getFPGATimestamp() - periodicStartTime) * 1000.0);
   }
 }

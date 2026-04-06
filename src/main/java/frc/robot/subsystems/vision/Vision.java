@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -69,6 +70,8 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double periodicStartTime = Timer.getFPGATimestamp();
+
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
@@ -179,6 +182,9 @@ public class Vision extends SubsystemBase {
     // Log the currently running command
     Command currentCommand = this.getCurrentCommand();
     Logger.recordOutput("Vision/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
+
+    // Log periodic execution time
+    Logger.recordOutput("Vision/PeriodicExecutionTimeMs", (Timer.getFPGATimestamp() - periodicStartTime) * 1000.0);
   }
 
   @FunctionalInterface

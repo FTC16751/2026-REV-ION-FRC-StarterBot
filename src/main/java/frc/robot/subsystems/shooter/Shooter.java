@@ -12,6 +12,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -184,6 +185,8 @@ public class Shooter extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double periodicStartTime = Timer.getFPGATimestamp();
+
     io.updateInputs(inputs);
 
     // In auto mode, update currentShootRpm from the distance→RPM table each cycle
@@ -206,5 +209,8 @@ public class Shooter extends SubsystemBase {
     // Log the currently running command
     Command currentCommand = this.getCurrentCommand();
     Logger.recordOutput("Shooter/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
+
+    // Log periodic execution time
+    Logger.recordOutput("Shooter/PeriodicExecutionTimeMs", (Timer.getFPGATimestamp() - periodicStartTime) * 1000.0);
   }
 }
