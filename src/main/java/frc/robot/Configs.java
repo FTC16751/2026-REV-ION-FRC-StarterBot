@@ -114,7 +114,7 @@ public final class Configs {
   
       pivotConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-        .pid(2.0, 0.0, 0.0) //Tune this!
+        .pid(1.5, 0.0, 0.0) //Tune this!
         .outputRange(-1.0, 1.0)
         .feedForward
           .kS(.1)
