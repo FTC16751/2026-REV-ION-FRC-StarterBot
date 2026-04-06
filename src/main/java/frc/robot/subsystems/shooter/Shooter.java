@@ -98,7 +98,7 @@ public class Shooter extends SubsystemBase {
   public Command runFlywheelCommand() {
     return this.startEnd(
         () -> { this.setFlywheelVelocity(currentShootRpm); },
-        () -> { this.setFlywheelVelocity(0.0); }
+        () -> { this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm); }
     ).withName("Spinning Up Flywheel");
   }
 
@@ -109,7 +109,7 @@ public class Shooter extends SubsystemBase {
           this.setFeederPower(FeederSetpoints.kFeed);
         },
         () -> {
-          this.setFlywheelVelocity(0.0);
+          this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm);
           this.setFeederPower(0.0);
         }
     ).withName("Feeding");
@@ -118,7 +118,10 @@ public class Shooter extends SubsystemBase {
   /** Runs feeder motor only (no flywheel). Use for manual D-Pad control. */
   public Command runFeederOnlyCommand() {
     return this.startEnd(
-        () -> this.setFeederPower(FeederSetpoints.kFeed),
+        () -> {
+          this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm);
+          this.setFeederPower(FeederSetpoints.kFeed);
+        },
         () -> this.setFeederPower(0.0)
     ).withName("Feeder Forward");
   }
@@ -126,7 +129,10 @@ public class Shooter extends SubsystemBase {
   /** Runs feeder motor in reverse only. */
   public Command runFeederReverseCommand() {
     return this.startEnd(
-        () -> this.setFeederPower(-FeederSetpoints.kFeed),
+        () -> {
+          this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm);
+          this.setFeederPower(-FeederSetpoints.kFeed);
+        },
         () -> this.setFeederPower(0.0)
     ).withName("Feeder Reverse");
   }
@@ -164,15 +170,31 @@ public class Shooter extends SubsystemBase {
   public Command runShooterCommand() {
     return this.run(() -> this.setFlywheelVelocity(currentShootRpm))
         .until(isFlywheelSpinning)
-        .finallyDo(interrupted -> { if (interrupted) io.stop(); })
+        .finallyDo(interrupted -> { 
+          if (interrupted) {
+            this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm);
+            this.setFeederPower(0.0);
+          }
+        })
         .andThen(
             // Use run() (not startEnd) so currentShootRpm changes from X/B buttons
             // take effect every cycle while the shooter is active.
             this.run(() -> {
               this.setFlywheelVelocity(currentShootRpm);
               this.setFeederPower(FeederSetpoints.kFeed);
-            }).finallyDo(() -> io.stop())
+            }).finallyDo(() -> {
+              this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm);
+              this.setFeederPower(0.0);
+            })
         ).withName("Shooting");
+  }
+
+  /** Default command to keep the flywheel spinning at an idle coast speed. */
+  public Command idleCommand() {
+    return this.run(() -> {
+      this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm);
+      this.setFeederPower(0.0);
+    }).withName("Idle Shooter");
   }
 
   /** Command to completely stop the shooter, overriding any idle coasting. */
