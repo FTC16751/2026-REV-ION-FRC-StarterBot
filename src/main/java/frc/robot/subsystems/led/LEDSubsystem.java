@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  *     P2: FMS data missing → white/red strobe
  *     P3: Shift ending     → yellow/orange urgent wave
  *     P4: Match over       → VOLT lightning bolt
- *     P5: Low battery      → orange-red blink (disabled only)
+ *     P5: Low battery      → red blink (disabled only)
  *     Normal: state switch
  */
 public class LEDSubsystem extends SubsystemBase {
@@ -37,6 +37,7 @@ public class LEDSubsystem extends SubsystemBase {
 
     // ── Pattern Timing ────────────────────────────────────────────────────────
     private static final double BLINK_INTERVAL    = 0.15; // seconds per blink half-cycle
+    private static final double FAST_BLINK_INTERVAL = 0.05; // seconds per fast blink half-cycle
     private static final double BREATHE_PERIOD    = 2.0;  // seconds per breathe cycle
     private static final double CHASE_INTERVAL    = 0.05; // seconds per chase step
     private static final double CHASE_AIM_INTERVAL = 0.02; // fast chase for aim-locked
@@ -272,10 +273,10 @@ public class LEDSubsystem extends SubsystemBase {
             return;
         }
 
-        // ── P5: Low battery (disabled only) → orange-red blink ───────────────────
+        // ── P5: Low battery (disabled only) → red blink ──────────────────────────
         if (DriverStation.isDisabled()
                 && RobotController.getBatteryVoltage() < BATTERY_LOW_THRESHOLD) {
-            patternBlink(LedColor.DEEP_ORANGE);
+            patternBlink(LedColor.RED, FAST_BLINK_INTERVAL);
             applyAndSend();
             return;
         }
@@ -322,7 +323,7 @@ public class LEDSubsystem extends SubsystemBase {
                                                LedColor.PURPLE.r, LedColor.PURPLE.g, LedColor.PURPLE.b);
 
             // Low battery — manual override (P5 auto-detects while disabled)
-            case LOW_BATTERY    -> patternBlink(LedColor.DEEP_ORANGE);
+            case LOW_BATTERY    -> patternBlink(LedColor.RED, FAST_BLINK_INTERVAL);
 
             // End-game countdown celebration (during match, last ~20s)
             case END_GAME       -> patternRainbowChase();
@@ -460,6 +461,7 @@ public class LEDSubsystem extends SubsystemBase {
 
     private void patternSolid(LedColor c)   { patternSolid(c.r, c.g, c.b); }
     private void patternBlink(LedColor c)   { patternBlink(c.r, c.g, c.b); }
+    private void patternBlink(LedColor c, double interval) { patternBlink(c.r, c.g, c.b, interval); }
     private void patternBreathe(LedColor c) { patternBreathe(c.r, c.g, c.b); }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -473,13 +475,18 @@ public class LEDSubsystem extends SubsystemBase {
         }
     }
 
+    /** Blink the entire strip on/off at the specified interval. */
+    private void patternBlink(int r, int g, int b, double interval) {
+        boolean on = (int)(m_timer.get() / interval) % 2 == 0;
+        patternSolid(on ? r : 0, on ? g : 0, on ? b : 0);
+    }
+
     /**
      * Blink the entire strip on/off at BLINK_INTERVAL.
      * Uses the state-relative m_timer (resets when setState() is called).
      */
     private void patternBlink(int r, int g, int b) {
-        boolean on = (int)(m_timer.get() / BLINK_INTERVAL) % 2 == 0;
-        patternSolid(on ? r : 0, on ? g : 0, on ? b : 0);
+        patternBlink(r, g, b, BLINK_INTERVAL);
     }
 
     /**
