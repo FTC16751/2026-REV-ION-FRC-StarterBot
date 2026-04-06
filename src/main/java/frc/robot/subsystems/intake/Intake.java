@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -132,6 +133,28 @@ public class Intake extends SubsystemBase {
 
   public Command retractIntakeCommand() {
     return this.runOnce(() -> setPivotPosition(PivotSetpoints.kRetractedPosition)).withName("Retract Intake");
+  }
+
+  public Command agitateCommand() {
+    Timer agitateTimer = new Timer();
+    return Commands.startRun(
+        () -> {
+          agitateTimer.restart();
+          setPivotPosition(PivotSetpoints.kDeployedPosition);
+          setIntakePower(IntakeSetpoints.kIntake);
+        },
+        () -> {
+          setIntakePower(IntakeSetpoints.kIntake);
+          if (agitateTimer.advanceIfElapsed(0.3)) {
+            if (Math.abs(pivotTarget - PivotSetpoints.kAgitatePosition) < 0.01) {
+              setPivotPosition(PivotSetpoints.kDeployedPosition);
+            } else {
+              setPivotPosition(PivotSetpoints.kAgitatePosition);
+            }
+          }
+        },
+        this
+    ).finallyDo(() -> setIntakePower(0.0)).withName("Agitate");
   }
 
   public Command partialIntakeCommand(DoubleSupplier percent) {

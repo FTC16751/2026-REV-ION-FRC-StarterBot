@@ -5,21 +5,28 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Cross Bump Sideways"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "DeployIntake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.02
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Cross Bump Sideways_Right"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.5
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "DeployIntake"
+                }
+              }
+            ]
           }
         },
         {
@@ -50,7 +57,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Cross Bump Again"
+            "pathName": "Cross Bump Again_Right"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AimAndShoot"
           }
         }
       ]

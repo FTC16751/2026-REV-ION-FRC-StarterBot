@@ -33,7 +33,7 @@ public class LEDSubsystem extends SubsystemBase {
 
     // ── Hardware Constants ────────────────────────────────────────────────────
     private static final int PWM_PORT   = 0;    // PWM port on roboRIO (change if needed)
-    private static final int LED_LENGTH = 144;  // Number of LEDs on your strip
+    private static final int LED_LENGTH = 77;   // Number of LEDs on your strip
 
     // ── Pattern Timing ────────────────────────────────────────────────────────
     private static final double BLINK_INTERVAL    = 0.15; // seconds per blink half-cycle
@@ -81,6 +81,27 @@ public class LEDSubsystem extends SubsystemBase {
     // ── Hardware Objects ──────────────────────────────────────────────────────
     private final AddressableLED       m_led;
     private final AddressableLEDBuffer m_buffer;
+
+    // ── Named Colors ──────────────────────────────────────────────────────────
+    private enum LedColor {
+        RED         (255,   0,   0),
+        GREEN       (  0, 255,   0),
+        WHITE       (255, 255, 255),
+        BLUE        (  0, 100, 255),
+        PURPLE      ( 75,   0, 130),
+        ORANGE      (255, 165,   0),  // target locked / too far warning
+        VOLT_ORANGE (255,  80,   0),  // inactive-hub solid / team color
+        VOLT_YELLOW (255, 200,   0),  // idle breathe highlight
+        DEEP_ORANGE (255,  50,   0),  // low battery blink / alert blink
+        DIM_ORANGE  ( 40,  12,   0),  // lightning bolt background
+        PINK        (255,  20, 147);  // distinct, unused color for inactive shift
+
+        final int r, g, b;
+        LedColor(int r, int g, int b) { this.r = r; this.g = g; this.b = b; }
+    }
+
+    // ── AprilTag Overlay State ─────────────────────────────────────────────────
+    private boolean m_aprilTagVisible = false;
 
     // ── Base State (set externally via setState()) ────────────────────────────
     private LEDState m_currentState = LEDState.IDLE;
@@ -222,50 +243,40 @@ public class LEDSubsystem extends SubsystemBase {
         // -
 
         // ── P1: E-stop → solid red ────────────────────────────────────────────────
-        // E-stop means a safety stop was called. Immediately show red and nothing else.
         if (DriverStation.isEStopped()) {
-            patternSolid(255, 0, 0);
-            m_led.setData(m_buffer);
+            patternSolid(LedColor.RED);
+            applyAndSend();
             return;
         }
 
         // ── P2: Auto winner not set → white/red fast strobe ──────────────────────
-        // If 1+ seconds have passed in teleop and we still have no FMS game-specific
-        // message, the shift schedule is unknown. Alert the drive team immediately —
-        // they need to verify manually whether our hub is active before shooting.
-        // (Does not fire in simulation/practice where there is no FMS.)
         if (isTeleop && DriverStation.isFMSAttached() && m_teleopTimer.hasElapsed(1.0)
                 && DriverStation.getGameSpecificMessage().isEmpty()) {
-            patternAlertStrobe(); // white/red alternating at 5 Hz
-            m_led.setData(m_buffer);
+            patternAlertStrobe();
+            applyAndSend();
             return;
         }
 
         // ── P3: Active shift ending soon → urgent yellow/orange wave ─────────────
-        // When OUR hub window is active and about to close, show an urgent wave
-        // pattern to signal the driver to SHOOT NOW before the window ends.
         if (isTeleop && DriverStation.isFMSAttached() && isOurShiftActive() && shiftTimeRemaining() < SHIFT_WARN_TIME) {
-            patternWave(255, 220, 0, 255, 80, 0); // yellow ↔ deep orange
-            m_led.setData(m_buffer);
+            patternWave(LedColor.VOLT_YELLOW.r, LedColor.VOLT_YELLOW.g, LedColor.VOLT_YELLOW.b,
+                        LedColor.VOLT_ORANGE.r, LedColor.VOLT_ORANGE.g, LedColor.VOLT_ORANGE.b);
+            applyAndSend();
             return;
         }
 
         // ── P4: Match over → VOLT lightning bolt ─────────────────────────────────
-        // Post-match celebration: orange→yellow bolt sweeps the strip repeatedly.
-        // Only fires when FMS confirms match end; never fires in practice mode.
         if (m_matchOver) {
             patternLightningBolt();
-            m_led.setData(m_buffer);
+            applyAndSend();
             return;
         }
 
         // ── P5: Low battery (disabled only) → orange-red blink ───────────────────
-        // Checked only while disabled to avoid false positives from voltage dips
-        // during heavy motor use. 11.5V is a reliable "needs charging" threshold.
         if (DriverStation.isDisabled()
                 && RobotController.getBatteryVoltage() < BATTERY_LOW_THRESHOLD) {
-            patternBlink(255, 50, 0); // orange-red blink
-            m_led.setData(m_buffer);
+            patternBlink(LedColor.DEEP_ORANGE);
+            applyAndSend();
             return;
         }
 
@@ -276,50 +287,51 @@ public class LEDSubsystem extends SubsystemBase {
         switch (m_currentState) {
 
             // Disabled idle: pulse between deep orange and yellow (VOLT team colors).
-            // Two-color breathe keeps the strip visible at all brightness levels.
-            case IDLE -> patternBreatheColor(255, 50, 0, 255, 200, 0);
+            case IDLE -> patternBreatheColor(
+                    LedColor.DEEP_ORANGE.r, LedColor.DEEP_ORANGE.g, LedColor.DEEP_ORANGE.b,
+                    LedColor.VOLT_YELLOW.r, LedColor.VOLT_YELLOW.g, LedColor.VOLT_YELLOW.b);
 
             // Teleop: shift-aware indicator.
             //   Blue/purple wave = our hub is ACTIVE  → score now!
             //   Orange solid     = our hub is INACTIVE → defend, collect, wait
             case TELEOP -> {
                 if (isTeleop && isOurShiftActive())
-                    patternWave(0, 100, 255, 75, 0, 130); // blue ↔ purple = hub active
+                    patternWave(LedColor.BLUE.r,  LedColor.BLUE.g,  LedColor.BLUE.b,
+                                LedColor.PURPLE.r, LedColor.PURPLE.g, LedColor.PURPLE.b);
                 else
-                    patternSolid(255, 80, 0);              // orange solid = hub inactive
+                    patternSolid(LedColor.PINK);
             }
 
             // Vision target acquired — blink orange to alert operator
-            case TARGET_LOCKED  -> patternBlink(255, 165, 0);
+            case TARGET_LOCKED  -> patternBlink(LedColor.ORANGE);
 
             // In range and aimed — solid green signals "ready to fire"
-            case READY_TO_SHOOT -> patternSolid(0, 255, 0);
+            case READY_TO_SHOOT -> patternSolid(LedColor.GREEN);
 
             // Aim PID converged on target — fast green chase shows active tracking
             case AIM_LOCKED     -> patternChaseAim();
 
             // Currently shooting — green blink for visual confirmation
-            case SHOOTING       -> patternBlink(0, 255, 0);
+            case SHOOTING       -> patternBlink(LedColor.GREEN);
 
             // Too far from hub to score reliably — orange blink warning
-            case TOO_FAR        -> patternBlink(255, 165, 0);
+            case TOO_FAR        -> patternBlink(LedColor.ORANGE);
 
             // Autonomous running — smooth blue/purple wave
-            // (Replaced the two-color chase for a smoother, more polished look)
-            case AUTO           -> patternWave(0, 100, 255, 75, 0, 130);
+            case AUTO           -> patternWave(LedColor.BLUE.r,  LedColor.BLUE.g,  LedColor.BLUE.b,
+                                               LedColor.PURPLE.r, LedColor.PURPLE.g, LedColor.PURPLE.b);
 
             // Low battery — manual override (P5 auto-detects while disabled)
-            case LOW_BATTERY    -> patternBlink(255, 50, 0);
+            case LOW_BATTERY    -> patternBlink(LedColor.DEEP_ORANGE);
 
             // End-game countdown celebration (during match, last ~20s)
             case END_GAME       -> patternRainbowChase();
 
             // E-stop state set via setState() — blink red
-            // (Hardware e-stop is also caught by P1 override above)
-            case FAULT          -> patternBlink(255, 0, 0);
+            case FAULT          -> patternBlink(LedColor.RED);
         }
 
-        m_led.setData(m_buffer);
+        applyAndSend();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -407,6 +419,48 @@ public class LEDSubsystem extends SubsystemBase {
         }
         return 0.0;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Patterns
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Public AprilTag Overlay Setter
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Call with true when Limelight sees an AprilTag; false when it loses sight. */
+    public void setAprilTagVisible(boolean visible) {
+        m_aprilTagVisible = visible;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Send Helper — applies AprilTag overlay then pushes buffer to strip
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Applies the AprilTag indicator overlay (pixels 0–2 and 74–76 → green)
+     * on top of whatever pattern is already in the buffer, then sends to strip.
+     * Call instead of m_led.setData(m_buffer) everywhere in periodic().
+     */
+    private void applyAndSend() {
+        if (m_aprilTagVisible) {
+            m_buffer.setRGB(0, 0, 255, 0);
+            m_buffer.setRGB(1, 0, 255, 0);
+            m_buffer.setRGB(2, 0, 255, 0);
+            m_buffer.setRGB(74, 0, 255, 0);
+            m_buffer.setRGB(75, 0, 255, 0);
+            m_buffer.setRGB(76, 0, 255, 0);
+        }
+        m_led.setData(m_buffer);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LedColor overloads — convenience wrappers for single-color patterns
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private void patternSolid(LedColor c)   { patternSolid(c.r, c.g, c.b); }
+    private void patternBlink(LedColor c)   { patternBlink(c.r, c.g, c.b); }
+    private void patternBreathe(LedColor c) { patternBreathe(c.r, c.g, c.b); }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Patterns

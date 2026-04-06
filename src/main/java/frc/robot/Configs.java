@@ -114,11 +114,11 @@ public final class Configs {
   
       pivotConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-        .pid(1.0, 0, 0) //Tune this!
-        .outputRange(-0.6, 0.6) // Safety for testing. Tune this!
+        .pid(2.0, 0.0, 0.0) //Tune this!
+        .outputRange(-1.0, 1.0)
         .feedForward
           .kS(.1)
-          .kCos(0.0000014);
+          .kCos(0.25);
 
     }
   }

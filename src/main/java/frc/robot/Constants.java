@@ -62,12 +62,13 @@ public final class Constants {
       public static final double kRetractedPosition = 0.33;
       public static final double kDeployedPosition = 0.050;
       // Cosine feedforward constant — reserved for future gravity-hold tuning, currently unused.
-      public static final double kCos = 0.05;
+      public static final double kCos = 0.55;
       public static final double kPositionTolerance = 0.02; // rotations — PID at-target threshold
       // How close the arm must be to kDeployedPosition before free-deploy mode engages.
       public static final double kCompliantHoldTolerance = 0.01;
       // Nudge: rotations added to pivotTarget per 20ms cycle while button held (~0.25 rot/sec)
       public static final double kNudgePerCycle = 0.005;
+      public static final double kAgitatePosition = 0.1500; // Upper agitate position
     }
 
     // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.

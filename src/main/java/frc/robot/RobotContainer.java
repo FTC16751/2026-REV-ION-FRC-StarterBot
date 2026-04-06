@@ -44,6 +44,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.RobotController;
 
 /**
@@ -147,6 +148,39 @@ public class RobotContainer {
                         .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
                                 .andThen(m_conveyor.runConveyorCommand()))
                         .withTimeout(7.0)); // Timeout ensures auto doesn't hang forever
+                NamedCommands.registerCommand("AutoAim",
+                        DriveCommands.joystickDriveAim(drive, () -> 0.0, () -> 0.0)
+                                .until(() -> drive.isAimedAtTarget(3.0))
+                                .withTimeout(2.0));
+                NamedCommands.registerCommand("AimAndShoot",
+                        m_shooter.enableAutoSpeedCommand()
+                                .andThen(DriveCommands.joystickDriveAim(drive, () -> 0.0, () -> 0.0)
+                                        .until(() -> drive.isAimedAtTarget(3.0))
+                                        .withTimeout(2.0))
+                                .andThen(m_shooter.runShooterCommand()
+                                        .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                                                .andThen(m_conveyor.runConveyorCommand()))
+                                        .withTimeout(7.0)));
+                NamedCommands.registerCommand("AgitateIntake", m_intake.agitateCommand());
+                NamedCommands.registerCommand("AimShootAndShimmy",
+                        m_shooter.enableAutoSpeedCommand()
+                                .andThen(
+                                        // Rotate to aim
+                                        DriveCommands.joystickDriveAim(drive, () -> 0.0, () -> 0.0)
+                                                .until(() -> drive.isAimedAtTarget(3.0))
+                                                .withTimeout(2.0))
+                                .andThen(
+                                        // Shimmy + shoot simultaneously
+                                         m_shooter.runShooterCommand()
+                                                .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)
+                                                        .andThen(m_conveyor.runConveyorCommand()
+                                                                .alongWith(DriveCommands.joystickDriveAim(drive,
+                                                                        () -> Math.sin(Timer.getFPGATimestamp() * Math.PI) * 0.12,
+                                                                        () -> 0.0))
+                                                                .alongWith(m_intake.agitateCommand())
+                                                        )
+                                                )
+                                                .withTimeout(7.0)));
 
                     // Set up auto routines
                     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -221,6 +255,11 @@ public class RobotContainer {
         // 5. AIM LOCKED: Robot is aimed at goal within 8 degrees (overrides TOO_FAR when aimed)
         new Trigger(() -> drive.isAimedAtTarget(8.0))
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.AIM_LOCKED), m_leds));
+
+        // AprilTag indicator: pixels 0-2 (far left) and 74-76 (far right) → green when tag visible
+        new Trigger(vision::hasAprilTagVisible)
+            .onTrue(Commands.runOnce(() -> m_leds.setAprilTagVisible(true), m_leds))
+            .onFalse(Commands.runOnce(() -> m_leds.setAprilTagVisible(false), m_leds));
             
         // Note: Because WPILib command scheduling is "last scheduled wins", triggers defined lower down 
         // will override triggers defined above them if both conditions are true.
@@ -327,6 +366,9 @@ public class RobotContainer {
                 .leftTrigger(OIConstants.kTriggerButtonThreshold)
                 .whileTrue(m_intake.runIntakeOnlyCommand(() -> -operatorCtrlr.getLeftTriggerAxis())
                         .alongWith(m_conveyor.runConveyorReverseCommand()));
+
+        // RS: Agitate intake (oscillate pivot + run roller to jostle balls)
+        operatorCtrlr.rightStick().whileTrue(m_intake.agitateCommand());
 
         // RB: Deploy intake arm to deployed position
         operatorCtrlr.rightBumper().onTrue(m_intake.deployIntakeCommand());

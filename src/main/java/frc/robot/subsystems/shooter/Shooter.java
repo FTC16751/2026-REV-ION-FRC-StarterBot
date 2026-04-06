@@ -44,11 +44,13 @@ public class Shooter extends SubsystemBase {
   // *** PLACEHOLDER VALUES — tune these on the field! ***
   private static final InterpolatingDoubleTreeMap shooterRpmTable = new InterpolatingDoubleTreeMap();
   static {
-    shooterRpmTable.put(1.5, 3500.0); // close range  (~5 ft)
-    shooterRpmTable.put(2.0, 4400.0); // ~6.5 ft — tuned +10% from observed 4000
-    shooterRpmTable.put(2.5, 4500.0); // medium range (~8 ft)
-    shooterRpmTable.put(3.5, 5200.0); // far range    (~11 ft)
-    shooterRpmTable.put(5.0, 5500.0); // max effective range (~16 ft)
+    shooterRpmTable.put(1.4, 1800.0); // close range  (~5 ft)
+    shooterRpmTable.put(2.0, 2050.0); // ~6.5 ft — tuned +10% from observed 4000
+    shooterRpmTable.put(2.5, 2850.0); // ~6.5 ft — tuned +10% from observed 4000
+
+    shooterRpmTable.put(2.9, 2950.0); // medium range (~8 ft)
+    shooterRpmTable.put(3.8, 3400.0); // far range    (~11 ft)
+    shooterRpmTable.put(5.0, 4000.0); // max effective range (~16 ft)
   }
 
   /**
@@ -152,6 +154,11 @@ public class Shooter extends SubsystemBase {
         currentShootRpm = FlywheelSetpoints.kShootRpm;
       }
     }).withName("Toggle Auto Shooter Speed");
+  }
+
+  /** Forces auto (distance-based) speed mode on. Safe to call repeatedly. */
+  public Command enableAutoSpeedCommand() {
+    return Commands.runOnce(() -> autoSpeedMode = true).withName("Enable Auto Shooter Speed");
   }
 
   public Command runShooterCommand() {
