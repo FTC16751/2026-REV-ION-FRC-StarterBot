@@ -46,8 +46,7 @@ public class Shooter extends SubsystemBase {
   static {
     shooterRpmTable.put(1.4, 1800.0); // close range  (~5 ft)
     shooterRpmTable.put(2.0, 2050.0); // ~6.5 ft — tuned +10% from observed 4000
-    shooterRpmTable.put(2.5, 2850.0); // ~6.5 ft — tuned +10% from observed 4000
-
+    shooterRpmTable.put(2.5, 2850.0); 
     shooterRpmTable.put(2.9, 2950.0); // medium range (~8 ft)
     shooterRpmTable.put(3.8, 3400.0); // far range    (~11 ft)
     shooterRpmTable.put(5.0, 4000.0); // max effective range (~16 ft)
@@ -175,6 +174,14 @@ public class Shooter extends SubsystemBase {
         ).withName("Shooting");
   }
 
+  /** Command to completely stop the shooter, overriding any idle coasting. */
+  public Command stopShooterCommand() {
+    return this.run(() -> {
+      this.setFlywheelVelocity(0.0);
+      this.setFeederPower(0.0);
+    }).withName("Stop Shooter");
+  }
+
   @Override
   public void periodic() {
     io.updateInputs(inputs);
@@ -195,5 +202,9 @@ public class Shooter extends SubsystemBase {
     Logger.recordOutput("Shooter/currentShootRpm", currentShootRpm);
     Logger.recordOutput("Shooter/autoSpeedMode", autoSpeedMode);
     Logger.recordOutput("Shooter/distanceToTargetMeters", distanceToTargetMeters.getAsDouble());
+    
+    // Log the currently running command
+    Command currentCommand = this.getCurrentCommand();
+    Logger.recordOutput("Shooter/CurrentCommand", currentCommand != null ? currentCommand.getName() : "None");
   }
 }

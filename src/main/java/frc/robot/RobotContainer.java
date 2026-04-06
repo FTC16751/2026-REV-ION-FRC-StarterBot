@@ -288,6 +288,9 @@ public class RobotContainer {
                         () -> -driveCtrlr.getLeftX()  * getDriveSpeedMultiplier(),
                         () -> -driveCtrlr.getRightX() * getDriveSpeedMultiplier()));
 
+        // Keep the shooter flywheel idling when no other commands are using it
+        m_shooter.setDefaultCommand(m_shooter.idleCommand());
+
         // B: Lock facing alliance station (0° alliance-relative) while held
         driveCtrlr
                 .b()
@@ -394,6 +397,9 @@ public class RobotContainer {
         // X/B Buttons: Adjust shooter target speed -/+ 100 RPM
         operatorCtrlr.x().onTrue(m_shooter.adjustShooterSpeedCommand(-100));
         operatorCtrlr.b().onTrue(m_shooter.adjustShooterSpeedCommand(+100));
+
+        // Start Button: Toggle shooter sleep mode (completely stop overriding idle)
+        operatorCtrlr.start().toggleOnTrue(m_shooter.stopShooterCommand());
 
                 // D-pad snap to heading (alliance-aware: Up = away from your station)
         driveCtrlr.povUp().whileTrue(DriveCommands.joystickDriveAtAngle(
