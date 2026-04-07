@@ -256,6 +256,16 @@ public class RobotContainer {
         new Trigger(() -> drive.isAimedAtTarget(8.0))
             .whileTrue(Commands.run(() -> m_leds.setState(LEDState.AIM_LOCKED), m_leds));
 
+        // 6. SHOOTING INDICATOR: Green when at target speed, Red when spinning up or dropped below
+        new Trigger(() -> m_shooter.getCurrentCommand() != null && m_shooter.getCurrentCommand().getName().equals("Shooting"))
+            .whileTrue(Commands.run(() -> {
+                if (m_shooter.isFlywheelSpinning.getAsBoolean()) {
+                    m_leds.setState(LEDState.READY_TO_SHOOT); // Solid Green
+                } else {
+                    m_leds.setState(LEDState.FAULT); // Blinks Red
+                }
+            }, m_leds));
+
         // AprilTag indicator: pixels 0-2 (far left) and 74-76 (far right) → green when tag visible
         new Trigger(vision::hasAprilTagVisible)
             .onTrue(Commands.runOnce(() -> m_leds.setAprilTagVisible(true), m_leds))

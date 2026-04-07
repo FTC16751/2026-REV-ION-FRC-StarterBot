@@ -59,7 +59,7 @@ public final class Constants {
 
     public static final class PivotSetpoints {
       public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
-      public static final double kRetractedPosition = 0.33;
+      public static final double kRetractedPosition = 0.42;
       public static final double kDeployedPosition = 0.050;
       // Cosine feedforward constant — reserved for future gravity-hold tuning, currently unused.
       public static final double kCos = 0.55;
@@ -100,7 +100,7 @@ public final class Constants {
     public static final class FlywheelSetpoints {
       public static final double kShootRpm = 2500;
       public static final double kMaxRpm = 6000; // hard cap for operator speed adjustments
-      public static final double kIdleRpm = 1000; // coasting speed to reduce spin-up time
+      public static final double kIdleRpm = 00; // coasting speed to reduce spin-up time
       public static final double kVelocityTolerance = 100;
     }
   }

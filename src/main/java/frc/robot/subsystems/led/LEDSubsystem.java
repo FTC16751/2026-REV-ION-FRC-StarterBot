@@ -311,10 +311,12 @@ public class LEDSubsystem extends SubsystemBase {
             //   Orange solid     = our hub is INACTIVE → defend, collect, wait
             case TELEOP -> {
                 if (isTeleop && isOurShiftActive())
-                    patternWave(LedColor.BLUE.r,  LedColor.BLUE.g,  LedColor.BLUE.b,
-                                LedColor.PURPLE.r, LedColor.PURPLE.g, LedColor.PURPLE.b);
+                    patternSolid(LedColor.BLUE);
+
+                   // patternWave(LedColor.BLUE.r,  LedColor.BLUE.g,  LedColor.BLUE.b,
+                     //           LedColor.PURPLE.r, LedColor.PURPLE.g, LedColor.PURPLE.b);
                 else
-                    patternSolid(LedColor.PINK);
+                    patternSolid(LedColor.PURPLE);
             }
 
             // Vision target acquired — blink orange to alert operator

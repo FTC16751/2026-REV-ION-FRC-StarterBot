@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -46,8 +47,8 @@ public class Intake extends SubsystemBase {
     armLig = new LoggedMechanismLigament2d("IntakeArm", Meters.of(Constants.Intake.ARM_LENGTH_METERS),
         Degrees.of(0.0));
     mechanism.getRoot("IntakeBase", Inches.of(20).in(Meters), Inches.of(0).in(Meters)).append(armLig);
-    // Always start retracted — arm retracts on first enable regardless of physical position.
-    pivotTarget = PivotSetpoints.kRetractedPosition;
+    
+    // Target position will sync to the absolute encoder while disabled
     System.out.println("---> Intake initialized (IO based)");
   }
 
@@ -172,6 +173,11 @@ public class Intake extends SubsystemBase {
     double periodicStartTime = Timer.getFPGATimestamp();
 
     io.updateInputs(inputs);
+
+    // Prevent jumping on enable by syncing the target to the physical position while disabled
+    if (DriverStation.isDisabled()) {
+      setPivotPosition(inputs.pivotPosition);
+    }
 
     // Free-deploy mode: once arm reaches deployed target, release PID entirely.
     // Arm floats freely — gravity holds it down, balls can push up without jamming.
