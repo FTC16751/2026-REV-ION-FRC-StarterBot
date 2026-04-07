@@ -52,7 +52,7 @@ public final class Constants {
     public static final int kPivotFollowerMotorCanId = 33; // SPARK Flex CAN ID (Right Pivot Motor, follower)
 
     public static final class IntakeSetpoints {
-      public static final double kIntake = 0.5;
+      public static final double kIntake = 0.8;
       public static final double kExtake = -0.5;
       public static final double kMaxPower = 1; // hard cap on intake roller output
     }
