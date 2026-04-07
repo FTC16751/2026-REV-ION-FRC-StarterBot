@@ -36,7 +36,7 @@ public class Shooter extends SubsystemBase {
   // Mutable shoot speed — adjusted by operator X/B buttons (manual) or table (auto)
   private double currentShootRpm = FlywheelSetpoints.kShootRpm;
   // Toggle for auto (distance-based) vs manual speed mode
-  private boolean autoSpeedMode = false;
+  private boolean autoSpeedMode = true;
 
   // Supplier of distance-to-goal in meters (wired to Drive.distanceToTarget() in RobotContainer)
   private final DoubleSupplier distanceToTargetMeters;
