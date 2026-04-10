@@ -100,7 +100,7 @@ public final class Constants {
     public static final class FlywheelSetpoints {
       public static final double kShootRpm = 2500;
       public static final double kMaxRpm = 6000; // hard cap for operator speed adjustments
-      public static final double kIdleRpm = 00; // coasting speed to reduce spin-up time
+      public static final double kIdleRpm = 1000; // coasting speed to reduce spin-up time
       public static final double kVelocityTolerance = 100;
     }
   }
