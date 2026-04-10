@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Cross Bump Sideways_Left"
+                  "pathName": "LEFT Cross Bump Sideways_CopyofRight"
                 }
               },
               {
@@ -34,24 +34,30 @@
           "data": {
             "commands": [
               {
-                "type": "named",
+                "type": "path",
                 "data": {
-                  "name": "RunIntake"
+                  "pathName": "LEFT Collect Fuel - Copy of Right Side"
                 }
               },
               {
-                "type": "path",
+                "type": "wait",
                 "data": {
-                  "pathName": "Collect Fuel - Left Side"
+                  "waitTime": 3.0
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "RunIntake"
                 }
               }
             ]
           }
         },
         {
-          "type": "wait",
+          "type": "path",
           "data": {
-            "waitTime": 0.02
+            "pathName": "LEFT Cross Bump Again_COPY OF Right"
           }
         },
         {
@@ -59,28 +65,15 @@
           "data": {
             "commands": [
               {
-                "type": "path",
-                "data": {
-                  "pathName": "Cross Bump Again_Left"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "PreSpinShooter"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
                 "type": "named",
                 "data": {
                   "name": "AimAndShoot"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 1.0
                 }
               },
               {
@@ -96,6 +89,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "LEFT side copy of Right",
   "choreoAuto": false
 }

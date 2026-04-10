@@ -55,15 +55,53 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Cross Bump Again_Right"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Cross Bump Again_Right"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "PreSpinShooter"
+                }
+              }
+            ]
           }
         },
         {
           "type": "named",
           "data": {
             "name": "AimAndShoot"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "AimAndShoot"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 1.0
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "AgitateIntake"
+                }
+              }
+            ]
           }
         }
       ]

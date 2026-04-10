@@ -118,7 +118,7 @@ public final class Configs {
         .outputRange(-1.0, 1.0)
         .feedForward
           .kS(.1)
-          .kCos(0.25);
+          .kCos(Intake.PivotSetpoints.kCos);
 
     }
   }

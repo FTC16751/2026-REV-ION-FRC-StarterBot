@@ -143,6 +143,8 @@ public class RobotContainer {
                 // Recombine intake and conveyor for PathPlanner
                 NamedCommands.registerCommand("RunIntake_withConveyor", m_intake.runIntakeCommand().alongWith(m_conveyor.runConveyorIntakeCommand())
                         .withTimeout(3.0));
+                // Pre-spin the shooter to a preset speed (e.g. 3000 RPM) while moving
+                NamedCommands.registerCommand("PreSpinShooter", m_shooter.preSpinShooterCommand(3000.0));
                 // Re-use the same reliable shooting sequence we built for the Y button
                 NamedCommands.registerCommand("Shoot", m_shooter.runShooterCommand()
                         .alongWith(Commands.waitUntil(m_shooter.isFlywheelSpinning)

@@ -46,10 +46,10 @@ public class Shooter extends SubsystemBase {
   private static final InterpolatingDoubleTreeMap shooterRpmTable = new InterpolatingDoubleTreeMap();
   static {
     shooterRpmTable.put(1.5, 1800.0); // close range  (~5 ft)
-    shooterRpmTable.put(2.25, 2000.0); // ~6.5 ft — tuned +10% from observed 4000
+    shooterRpmTable.put(2.25, 2225.0); // ~6.5 ft — tuned +10% from observed 4000
    /// shooterRpmTable.put(2.5, 2850.0); 
-    shooterRpmTable.put(3.1, 2400.0); // medium range (~8 ft)
-    shooterRpmTable.put(3.8, 3450.0); // far range    (~11 ft)
+    shooterRpmTable.put(3.1, 2675.0); // medium range (~8 ft)
+    shooterRpmTable.put(3.8, 3650.0); // far range    (~11 ft)
     shooterRpmTable.put(5.0, 4000.0); // max effective range (~16 ft)
   }
 
@@ -100,6 +100,20 @@ public class Shooter extends SubsystemBase {
         () -> { this.setFlywheelVelocity(currentShootRpm); },
         () -> { this.setFlywheelVelocity(FlywheelSetpoints.kIdleRpm); }
     ).withName("Spinning Up Flywheel");
+  }
+
+  /**
+   * Spins up the flywheel to a manual preset speed (e.g., for PathPlanner pre-spinning).
+   * Only runs the flywheel; does not run the feeder or conveyor.
+   */
+  public Command preSpinShooterCommand(double presetRpm) {
+    return Commands.sequence(
+        Commands.runOnce(() -> {
+          autoSpeedMode = false;
+          currentShootRpm = MathUtil.clamp(presetRpm, 0, FlywheelSetpoints.kMaxRpm);
+        }),
+        this.run(() -> this.setFlywheelVelocity(currentShootRpm))
+    ).withName(String.format("Pre-Spin Shooter (%.0f RPM)", presetRpm));
   }
 
   public Command runFeederCommand() {

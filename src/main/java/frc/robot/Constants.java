@@ -52,17 +52,17 @@ public final class Constants {
     public static final int kPivotFollowerMotorCanId = 33; // SPARK Flex CAN ID (Right Pivot Motor, follower)
 
     public static final class IntakeSetpoints {
-      public static final double kIntake = 0.8;
+      public static final double kIntake = 0.7;
       public static final double kExtake = -0.5;
-      public static final double kMaxPower = 1; // hard cap on intake roller output
+      public static final double kMaxPower = .7;
     }
 
     public static final class PivotSetpoints {
-      public static final double kZeroOffset = 0.5; // Adjust this if you need to zero the absolute encoder externally
+      public static final double kZeroOffset = 0.5; 
       public static final double kRetractedPosition = 0.42;
       public static final double kDeployedPosition = 0.050;
-      // Cosine feedforward constant — reserved for future gravity-hold tuning, currently unused.
-      public static final double kCos = 0.55;
+      // Cosine feedforward constant for gravity-hold tuning.
+      public static final double kCos = 0.25;
       public static final double kPositionTolerance = 0.02; // rotations — PID at-target threshold
       // How close the arm must be to kDeployedPosition before free-deploy mode engages.
       public static final double kCompliantHoldTolerance = 0.01;
