@@ -54,6 +54,12 @@ task(replayWatch, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+repositories {
+    maven {
+        url = uri("https://frcmaven.wpi.edu/artifactory/littletonrobotics-mvn-release/")
+    }
+}
+
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 5.
 dependencies {
