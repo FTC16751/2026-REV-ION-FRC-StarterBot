@@ -41,6 +41,7 @@ public class Intake extends SubsystemBase {
   private boolean m_freeDeployMode = false;
   private LoggedMechanism2d mechanism = new LoggedMechanism2d(3, 3);
   private LoggedMechanismLigament2d armLig;
+  private double currentTargetRpm = 0.0;
 
   public Intake(IntakeIO io) {
     this.io = io;
@@ -58,10 +59,27 @@ public class Intake extends SubsystemBase {
   }
 
   private void setIntakePower(double power) {
-    io.setIntakePower(MathUtil.clamp(power, -IntakeSetpoints.kMaxPower, IntakeSetpoints.kMaxPower));
+    if (IntakeSetpoints.kUseVelocityControl) {
+      currentTargetRpm = 0.0;
+      if (power > 0.05) {
+        currentTargetRpm = IntakeSetpoints.kIntakeRpm * (power / IntakeSetpoints.kIntake);
+      } else if (power < -0.05) {
+        currentTargetRpm = IntakeSetpoints.kExtakeRpm * (power / IntakeSetpoints.kExtake);
+      }
+      io.setIntakeVelocity(currentTargetRpm);
+    } else {
+      currentTargetRpm = 0.0;
+      io.setIntakePower(MathUtil.clamp(power, -IntakeSetpoints.kMaxPower, IntakeSetpoints.kMaxPower));
+    }
   }
 
   private void setPivotPosition(double position) {
+    // With zeroCentered(true), a hit past the deployed limit wraps the encoder to a large negative
+    // value (~-0.48), while normal near-retracted noise is only slightly negative (~-0.001).
+    // Detect the wrap-around case and snap to deployed so disabled-sync doesn't command retraction.
+    if (position < -PivotSetpoints.kPositionTolerance) {
+      position = PivotSetpoints.kDeployedPosition;
+    }
     pivotTarget = MathUtil.clamp(position,
         Math.min(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition),
         Math.max(PivotSetpoints.kRetractedPosition, PivotSetpoints.kDeployedPosition));
@@ -109,8 +127,8 @@ public class Intake extends SubsystemBase {
   public Command nudgePivotCommand(DoubleSupplier axisSupplier) {
     return Commands.run(() -> {
       double axis = axisSupplier.getAsDouble();
-      // deployed < retracted in encoder units, so positive axis → subtract to go toward deployed
-      setPivotPosition(pivotTarget - axis * PivotSetpoints.kNudgePerCycle);
+      // deployed > retracted in encoder units, so positive axis → add to go toward deployed
+      setPivotPosition(pivotTarget + axis * PivotSetpoints.kNudgePerCycle);
     }).withName("Nudge Pivot");
   }
 
@@ -124,7 +142,7 @@ public class Intake extends SubsystemBase {
 
   /** Nudge pivot toward retracted (up) while held; arm holds position on release. No subsystem requirement so it runs alongside other intake commands. */
   public Command nudgePivotUpCommand() {
-    return Commands.run(() -> setPivotPosition(pivotTarget + PivotSetpoints.kNudgePerCycle))
+    return Commands.run(() -> setPivotPosition(pivotTarget - PivotSetpoints.kNudgePerCycle))
         .withName("Nudge Pivot Up");
   }
 
@@ -197,6 +215,7 @@ public class Intake extends SubsystemBase {
     }
     Logger.recordOutput("Intake/freeDeployMode", m_freeDeployMode);
     Logger.recordOutput("Intake/pivotTarget", pivotTarget);
+    Logger.recordOutput("Intake/targetRpm", currentTargetRpm);
     
     // Map absolute values back to degrees solely for visualizing on the dashboard
     double startPos = PivotSetpoints.kRetractedPosition;

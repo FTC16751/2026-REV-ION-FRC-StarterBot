@@ -52,15 +52,20 @@ public final class Constants {
     public static final int kPivotFollowerMotorCanId = 33; // SPARK Flex CAN ID (Right Pivot Motor, follower)
 
     public static final class IntakeSetpoints {
-      public static final double kIntake = 0.7;
+      public static final double kIntake = 0.95;
       public static final double kExtake = -0.5;
-      public static final double kMaxPower = .7;
+      public static final double kMaxPower = 1.0;
+
+      // Feature flag and target RPMs for testing closed-loop velocity control
+      public static final boolean kUseVelocityControl = true;//false;
+      public static final double kIntakeRpm = 4000.0;
+      public static final double kExtakeRpm = -2000.0;
     }
 
     public static final class PivotSetpoints {
-      public static final double kZeroOffset = 0.5; 
-      public static final double kRetractedPosition = 0.42;
-      public static final double kDeployedPosition = 0.050;
+      public static final double kZeroOffset = 0.28676388; // Matches encoder zeroOffset in Configs.java
+      public static final double kRetractedPosition = 0.000; // Arm fully in — encoder zero reference
+      public static final double kDeployedPosition = 0.478;  // Measured via REV Hardware Client
       // Cosine feedforward constant for gravity-hold tuning.
       public static final double kCos = 0.25;
       public static final double kPositionTolerance = 0.02; // rotations — PID at-target threshold
@@ -68,7 +73,7 @@ public final class Constants {
       public static final double kCompliantHoldTolerance = 0.01;
       // Nudge: rotations added to pivotTarget per 20ms cycle while button held (~0.25 rot/sec)
       public static final double kNudgePerCycle = 0.005;
-      public static final double kAgitatePosition = 0.1500; // Upper agitate position
+      public static final double kAgitatePosition = 0.343; // Estimated from old ratio; verify on robot
     }
 
     // Arm sim for the pivot. We pick reasonable defaults for length/mass/gearing.
