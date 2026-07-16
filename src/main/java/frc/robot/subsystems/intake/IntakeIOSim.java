@@ -63,6 +63,7 @@ public class IntakeIOSim implements IntakeIO {
 
     // Intake: read applied voltage/current from the Spark
     inputs.intakeAppliedVoltage = intakeSpark.getAppliedOutput() * battery;
+    inputs.intakeVelocity = intakeSim.getVelocity();
 
     // Pivot: drive arm sim with motor applied voltage
     double appliedVolts = pivotSpark.getAppliedOutput() * battery;
@@ -107,6 +108,13 @@ public class IntakeIOSim implements IntakeIO {
   @Override
   public void setIntakePower(double power) {
     intakeSpark.set(power);
+  }
+
+  @Override
+  public void setIntakeVelocity(double rpm) {
+    try {
+      intakeSpark.getClosedLoopController().setSetpoint(rpm, com.revrobotics.spark.SparkBase.ControlType.kVelocity);
+    } catch (Exception ignored) {}
   }
 
   @Override

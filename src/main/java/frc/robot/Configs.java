@@ -91,21 +91,29 @@ public final class Configs {
         .openLoopRampRate(0.5)
         .smartCurrentLimit(40);
 
+      // Configure closed-loop velocity control (used when kUseVelocityControl = true)
+      intakeConfig.closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        .pid(0.0001, 0.0, 0.0)
+        .outputRange(-Intake.IntakeSetpoints.kMaxPower, Intake.IntakeSetpoints.kMaxPower)
+        .feedForward.kV(1.0 / Constants.NeoMotorConstants.kVortexKv);
+
       // Configure follower for second intake motor (follows leader, same direction)
       intakeFollowerConfig.follow(Intake.kIntakeMotorCanId, true);
 
       // Configure follower for right pivot motor (follows leader, inverted since it's on the opposite side)
       pivotFollowerConfig.follow(Intake.kPivotMotorCanId, true);
 
-      // Configure settings for the intake pivot motor 
+      // Configure settings for the intake pivot motor
       pivotConfig
-        .inverted(true)
+        .inverted(false)
         .idleMode(IdleMode.kBrake) // Brake mode to hold position
         .smartCurrentLimit(40);
-      
+
       pivotConfig.absoluteEncoder
-        .inverted(true)
-        .zeroCentered(true)
+        .inverted(false)
+        .zeroCentered(true)  // Shifts wrap point to ±0.5 so near-zero retracted readings stay ~0 not ~1
+        .zeroOffset(0.28676388) // Offset measured via REV Hardware Client with arm fully retracted
         .velocityConversionFactor(1.0 / 60.0) // RPM to RPS
         // These apply to REV Through Bore Encoder V2 (for V1, set them both to 1.0):
         //.startPulseUs(3.88443797)

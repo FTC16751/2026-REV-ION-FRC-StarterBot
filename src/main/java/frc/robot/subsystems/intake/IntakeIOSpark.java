@@ -6,6 +6,7 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -26,6 +27,7 @@ public class IntakeIOSpark implements IntakeIO {
   private final SparkFlex pivotFollowerMotor = new SparkFlex(Intake.kPivotFollowerMotorCanId, MotorType.kBrushless);
   private final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
   private final AbsoluteEncoder pivotEncoder = pivotMotor.getAbsoluteEncoder();
+  private final RelativeEncoder intakeEncoder = intakeMotor.getEncoder();
 
   private final Debouncer intakeDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
   private final Debouncer pivotDebouncer = new Debouncer(.5, Debouncer.DebounceType.kFalling);
@@ -59,6 +61,7 @@ public class IntakeIOSpark implements IntakeIO {
     ifOk(intakeMotor, new DoubleSupplier[] { intakeMotor::getAppliedOutput, intakeMotor::getBusVoltage }, (values) -> {
       inputs.intakeAppliedVoltage = values[0] * values[1];
     });
+    ifOk(intakeMotor, intakeEncoder::getVelocity, (value) -> inputs.intakeVelocity = value);
     inputs.intakeConnected = intakeDebouncer.calculate(!sparkStickyFault);
 
     // Pivot
@@ -76,6 +79,11 @@ public class IntakeIOSpark implements IntakeIO {
   @Override
   public void setIntakePower(double power) {
     intakeMotor.set(power);
+  }
+
+  @Override
+  public void setIntakeVelocity(double rpm) {
+    intakeMotor.getClosedLoopController().setReference(rpm, ControlType.kVelocity);
   }
 
   @Override
